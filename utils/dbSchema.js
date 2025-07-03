@@ -6,6 +6,7 @@ export const createDbSchema = async ()=> {
         await db.query(`CREATE TABLE IF NOT EXISTS users(
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
+            phone VARCHAR(10) NOT NULL,
             fcm_token TEXT NOT NULL DEFAULT '',
             device_type ENUM('A','I','W') NOT NULL DEFAULT 'W',
             status ENUM('1', '2') NOT NULL DEFAULT '1',
@@ -24,7 +25,7 @@ export const createDbSchema = async ()=> {
         await db.query(`CREATE TABLE IF NOT EXISTS otps( 
             id INT AUTO_INCREMENT PRIMARY KEY, 
             otp VARCHAR(10) NOT NULL,
-            number VARCHAR(10) NOT NULL,
+            phone VARCHAR(10) NOT NULL,
             expires_at TIMESTAMP NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
@@ -33,7 +34,7 @@ export const createDbSchema = async ()=> {
             id INT AUTO_INCREMENT PRIMARY KEY, 
             name VARCHAR(255) NOT NULL,
             address VARCHAR(255) NOT NULL,
-            image_urls TEXT NOT NULL,
+            image_urls JSON NOT NULL,
             latitude DECIMAL(10,8) NOT NULL,
             longitude DECIMAL(11,8) NOT NULL,
             qr_code_url TEXT NOT NULL,
@@ -47,10 +48,10 @@ export const createDbSchema = async ()=> {
             title VARCHAR(255),
             description TEXT,
             points INT NOT NULL,
-            image_urls TEXT,
+            image_urls JSON NOT NULL,
             status ENUM('1', '2') NOT NULL DEFAULT '1',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )`);
 
         await db.query(`CREATE TABLE IF NOT EXISTS quizzes( 
@@ -73,7 +74,40 @@ export const createDbSchema = async ()=> {
             status ENUM('1', '2') NOT NULL DEFAULT '1',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
-
+            
+        await db.query(`CREATE TABLE IF NOT EXISTS privacy_policy(
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            status ENUM('1', '2') NOT NULL DEFAULT '1',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+         )`)
+        
+        await db.query(`CREATE TABLE IF NOT EXISTS terms_conditions(
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            status ENUM('1', '2') NOT NULL DEFAULT '1',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`)
+        
+        await db.query(`CREATE TABLE IF NOT EXISTS rewards_redeemed( 
+            id INT AUTO_INCREMENT PRIMARY KEY, 
+            user_id INT NOT NULL, 
+            reward_id INT NOT NULL, 
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+        
+        await db.query(`CREATE TABLE IF NOT EXISTS points_earned(
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            reward_type ENUM('quiz','qr_scanned'),
+            quiz_id INT NULL,
+            gurudwara_id INT NULL,
+            points INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`)
+        
         console.log('All tables created succesfully')
 
     }catch(err){ 

@@ -5,8 +5,9 @@ import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import {connect_db} from './utils/db.js';
 import { createDbSchema } from './utils/dbSchema.js';
-
-
+import * as DOTENV  from './utils/dotenv.js';
+import { apiResponseError } from './middleware/error.js';
+import apiRouter from './routes/api/v1/index.js';
 
 const app = express();
 
@@ -30,15 +31,22 @@ const limiter = rateLimit({
     },
   });
 app.use(limiter);
-  
-// Connect to MySql database
-await connect_db();
-
-// Create database schema
-await createDbSchema(); 
 
 
-// Start Server 
-app.listen(3000, ()=>{
-    console.log('App is running')
+app.use('/api/v1', apiRouter);
+app.use(apiResponseError);
+
+(async()=> {
+  try { 
+    await connect_db();
+    await createDbSchema();
+    app.listen(DOTENV.PORT, '0.0.0.0', () => console.log(`SERVER running on the Port ${DOTENV.PORT}`));
+  }catch(err) { 
+    console.error('Startup Error', err.message);
+    process.exit(1);
+  }
+})();
+
+process.on('unhandledRejection', (err)=> {
+  console.error('Unhandled rejection', err.message);
 })
