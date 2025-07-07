@@ -15,9 +15,9 @@ export const apiResponse = (res, {error = false, code = 200, status = 1, message
 /** 
  * 
  */
-export const generateToken = async(id,name) => { 
+export const generateToken = async(id) => { 
     try { 
-        const payload = {id, name}
+        const payload = {id}
         const token = jwt.sign(payload, DOTENV.JWT_SECRET_KEY, {expiresIn : '30d'});
         return token;
     }catch(err){ 
