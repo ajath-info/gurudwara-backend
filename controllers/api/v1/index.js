@@ -5,6 +5,7 @@ import { generateOTP } from "../../../utils/helper.js";
 import { generateToken } from "../../../utils/helper.js";
 import { formatDateTime } from "../../../utils/helper.js";
 import { formatDate } from "date-fns";
+import { generateGurudwaraQR } from "../../../services/qrCode.js";
 
 export const sendOtp = async (req, res, next) => {
   try {
@@ -95,7 +96,6 @@ export const verifyOtp = async (req, res, next) => {
       [phone]
     );
     if (userRows.length === 0) {
-      
       // Create new user
       const [insertResult] = await db.query(
         `INSERT INTO users (phone, fcm_token, device_type) VALUES(?,?,?)`,
@@ -160,59 +160,67 @@ export const verifyOtp = async (req, res, next) => {
   }
 };
 
-export const updateUserName = async(req, res, next) => { 
-  try { 
-    const userId = req.user?.id; 
-    if(!userId){
+export const updateUserName = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
       return apiResponse(res, {
-        error : true, 
-        code : 401,
-        status : 0,
-        message : 'User not authenticated'
-      })
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User not authenticated",
+      });
     }
-    const {name} = req.body; 
+    const { name } = req.body;
 
     // Validate name field
-    if(!name || typeof(name) !== 'string') { 
-      return apiResponse(res, { 
-        error : true,
-        code : 400, 
-        status : 0, 
-        message : 'Enter valid name'
-      })
-    }
-
-    const [updatedUserRows] = await db.query(`UPDATE users SET name = ? WHERE id = ?`, [name, userId]);
-    if(updatedUserRows.affectedRows === 0) { 
+    if (!name || typeof name !== "string") {
       return apiResponse(res, {
-        error : true,
-        code : 400,
-        status : 0,
-        message : 'Error in updating the name'
-      })
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Enter valid name",
+      });
     }
-    const [updatedUser] = await db.query(`SELECT id, name, phone FROM users WHERE id = ?`, [userId]);
+
+    const [updatedUserRows] = await db.query(
+      `UPDATE users SET name = ? WHERE id = ?`,
+      [name, userId]
+    );
+    if (updatedUserRows.affectedRows === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Error in updating the name",
+      });
+    }
+    const [updatedUser] = await db.query(
+      `SELECT * FROM users WHERE id = ?`,
+      [userId]
+    );
+
+    // Get the token 
+    const [tokenRow] = await db.query(`SELECT * FROM tokens WHERE user_id = ?`,[userId]);
+    const token = tokenRow[0];
     const user = updatedUser[0];
-    const response = { 
-      id : user.id,
-      name : user.name,
-      phone : user.phone,
+    const response = {
+      token : token.token,
+      ...user
 
-    }
+    };
 
-    return apiResponse(res,{
-      error : false, 
-      code : 200,
-      status : 1,
-      message : 'User name updated successfully',
-      payload : response
-    })
-
-  }catch(err) { 
-    next(err)
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: "User name updated successfully",
+      payload: response,
+    });
+  } catch (err) {
+    next(err);
   }
-}
+};
 
 export const getAllGurudwaras = async (req, res, next) => {
   try {
@@ -473,93 +481,98 @@ export const logout = async (req, res, next) => {
 };
 
 /**
- * 
+ *
  */
-export const getGurudwaraDetails = async(req, res, next) => { 
-  try { 
-    const userId = req.user?.id; 
-    if(!userId) { 
-      return apiResponse(res, { 
-        error : true, 
-        code : 401, 
-        status : 0, 
-        message : 'User not authenticated'
-      })
+export const getGurudwaraDetails = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return apiResponse(res, {
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User not authenticated",
+      });
     }
 
-    const {gurudwaraId} = req.params.id;
-    if(!gurudwaraId) { 
-      return apiResponse(res, { 
-        error : true, 
-        code : 400,
-        status : 0,
-        message : 'Missing gurudwara id'
-      })
+    const gurudwaraId  = req.params.id;
+    if (!gurudwaraId) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Missing gurudwara id",
+      });
     }
 
-    // Check if the gurudwara exists 
-    const [row] = await db.query(`SELECT * FROM gurudwaras WHERE id = ? AND status = '1' `, [gurudwaraId]);
-    if(row.length === 0) { 
-      return apiResponse(res, { 
-        error : true, 
-        code : 404, 
-        status : 0, 
-        message : 'Gurudwara not found'
-      })
+    // Check if the gurudwara exists
+    const [row] = await db.query(
+      `SELECT * FROM gurudwaras WHERE id = ? AND status = '1' `,
+      [gurudwaraId]
+    );
+    if (row.length === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 404,
+        status: 0,
+        message: "Gurudwara not found",
+      });
     }
 
-    const [rewardsRows] = await db.query(`SELECT id, title, description, points, image_urls FROM rewards WHERE gurudwara_id = ? AND status = '1' ORDER BY created_at DESC`, [gurudwaraId]);
-    if(rewardsRows.length === 0) {
-      return apiResponse(res, { 
-        error : false, 
-        code : 404, 
-        status : 0, 
-        message : 'No rewards found for this gurudwara'
-      })
+    const [rewardsRows] = await db.query(
+      `SELECT id, title, description, points, image_urls FROM rewards WHERE gurudwara_id = ? AND status = '1' ORDER BY created_at DESC`,
+      [gurudwaraId]
+    );
+    if (rewardsRows.length === 0) {
+      return apiResponse(res, {
+        error: false,
+        code: 404,
+        status: 0,
+        message: "No rewards found for this gurudwara",
+      });
     }
 
-    const response = { 
-      gurudwaraDetails : { 
+    const response = {
+      gurudwaraDetails: {
         ...row[0],
-        created_at : formatDateTime(row[0].created_at),
-        rewards : rewardsRows
-      }
-    }
+        created_at: formatDateTime(row[0].created_at),
+        rewards: rewardsRows,
+      },
+    };
 
     return apiResponse(res, {
-        error : false,
-        code : 200,
-        status : 1,
-        message : 'Gurudwara details fetched succesfully',
-        palyoad : response
-      });
-
-    
-  }catch(err) { 
+      error: false,
+      code: 200,
+      status: 1,
+      message: "Gurudwara details fetched succesfully",
+      palyoad: response,
+    });
+  } catch (err) {
     next(err);
   }
-}
+};
 
 /**
  * Get rewards redemption history with details
  */
-export const getRewardsHistory = async(req, res, next) => {
+export const getRewardsHistory = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    if(!userId) {
+    if (!userId) {
       return apiResponse(res, {
-        error : true,
-        code : 401,
-        status : 0,
-        message : 'User not authenticated'
-      })
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User not authenticated",
+      });
     }
 
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT 
         rr.id as redemption_id,
         rr.user_id,
@@ -577,55 +590,56 @@ export const getRewardsHistory = async(req, res, next) => {
       INNER JOIN users u ON rr.user_id = u.id
       WHERE rr.user_id = ? AND r.status = '1'
       ORDER BY rr.created_at DESC LIMIT ? OFFSET ?
-    `, [userId, limit, offset]);
+    `,
+      [userId, limit, offset]
+    );
 
-    if(rows.length === 0) {
+    if (rows.length === 0) {
       return apiResponse(res, {
-        error : false,
-        code : 200,
-        status : 1,
-        message : 'No rewards history found for this user',
-        payload : []
-      })
+        error: false,
+        code: 200,
+        status: 1,
+        message: "No rewards history found for this user",
+        payload: [],
+      });
     }
 
-    const rewardsHistory = rows.map(r => {
+    const rewardsHistory = rows.map((r) => {
       return {
-        redemption : {
-          id : r.redemption_id,
-          redeemed_at : r.redeemed_at
+        redemption: {
+          id: r.redemption_id,
+          redeemed_at: r.redeemed_at,
         },
-        redeemed_rewards : {
-          title : r.reward_title,
-          description : r.reward_description,
-          image_urls : r.reward_images,
-          points : r.reward_points,
-          gurudwara_id : r.gurudwara_id
+        redeemed_rewards: {
+          title: r.reward_title,
+          description: r.reward_description,
+          image_urls: r.reward_images,
+          points: r.reward_points,
+          gurudwara_id: r.gurudwara_id,
         },
-        userDetail : {
-          id : r.user_id,
-          name : r.user_name,
-          phone : r.user_phone
-        }
-      }
+        userDetail: {
+          id: r.user_id,
+          name: r.user_name,
+          phone: r.user_phone,
+        },
+      };
     });
 
     return apiResponse(res, {
       error: false,
       code: 200,
       status: 1,
-      message: 'Rewards history retrieved successfully',
-      payload : { 
-        rewardsHistory, 
+      message: "Rewards history retrieved successfully",
+      payload: {
+        rewardsHistory,
         page,
-        limit
-      }
+        limit,
+      },
     });
-
-  } catch(err) {
+  } catch (err) {
     next(err);
   }
-}
+};
 
 export const getQuizzes = async (req, res, next) => {
   try {
@@ -644,7 +658,7 @@ export const getQuizzes = async (req, res, next) => {
     const [availableQuizzes] = await db.query(
       `
       SELECT q.* 
-      FORM quizzes q 
+      FROM quizzes q 
       LEFT JOIN quiz_submissions qs on q.id = qs.quiz_id AND qs.user_id = ?
       WHERE q.status = '1'
       AND qs.quiz_id IS NULL
@@ -663,7 +677,6 @@ export const getQuizzes = async (req, res, next) => {
       });
     }
 
-
     const response = {
       quizzes: availableQuizzes,
     };
@@ -680,52 +693,63 @@ export const getQuizzes = async (req, res, next) => {
   }
 };
 
-export const submitQuiz = async(req, res, next) => { 
-  try { 
-    const userId = req.user?.id; 
-    if(!userId) { 
-      return apiResponse(res, { 
-        error : true, 
-        code : 401,
-        status : 0,
-        message : 'User is not authenticated'
-      })
+export const submitQuiz = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return apiResponse(res, {
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User is not authenticated",
+      });
     }
-    const {quizId, selectedOption} = req.body; 
-  
+    const { quizId, selectedOption } = req.body;
 
     // Check if the quiz exists
-    const [checkQuiz] = await db.query(`SELECT * FROM quizzes WHERE id = ? AND status = '1'`,[quizId]);
-    if(checkQuiz.length === 0) { 
+    const [checkQuiz] = await db.query(
+      `SELECT * FROM quizzes WHERE id = ? AND status = '1'`,
+      [quizId]
+    );
+    if (checkQuiz.length === 0) {
       return apiResponse(res, {
-        error : true, 
-        code : 404, 
-        status : 0, 
-        message : 'No such quiz found'
-      })
+        error: true,
+        code: 404,
+        status: 0,
+        message: "No such quiz found",
+      });
     }
     // Check if the user has already submitted the quiz
-    const [checkSubmission]= await db.query(`SELECT * FROM quiz_submissions WHERE user_id = ? AND quiz_id = ?`,[userId, quizId]); 
-    if(checkSubmission.length !==0) { 
+    const [checkSubmission] = await db.query(
+      `SELECT * FROM quiz_submissions WHERE user_id = ? AND quiz_id = ?`,
+      [userId, quizId]
+    );
+    if (checkSubmission.length !== 0) {
       return apiResponse(res, {
-        error : true,
-        code : 400,
-        status : 0,
-        message : 'You have already submitted this quiz'
-      })
+        error: true,
+        code: 400,
+        status: 0,
+        message: "You have already submitted this quiz",
+      });
     }
 
-    // Submit the quiz 
+    // Submit the quiz
     const quiz = checkQuiz[0];
     const isCorrect = Number(selectedOption) === quiz.correct_option;
     const pointsEarned = isCorrect ? quiz.points : 0;
 
     await db.query(`START TRANSACTION`);
-    try { 
-      const [submission] = await db.query(`INSERT INTO quiz_submissions (user_id, quiz_id, selected_option, is_correct, points_earned) VALUES (?,?,?,?,?)`,[userId, quizId, selectedOption, isCorrect, pointsEarned]);
-      
-      if(isCorrect){ 
-        await db.query(`INSERT INTO points_earned (user_id, reward_type, quiz_id, points) VALUES (?,?,?,?)`,[userId, 'quiz', quizId, pointsEarned]);
+    try {
+      const [submission] = await db.query(
+        `INSERT INTO quiz_submissions (user_id, quiz_id, selected_option, is_correct, points_earned) VALUES (?,?,?,?,?)`,
+        [userId, quizId, selectedOption, isCorrect, pointsEarned]
+      );
+
+      if (isCorrect) {
+        await db.query(
+          `INSERT INTO points_earned (user_id, reward_type, quiz_id, points) VALUES (?,?,?,?)`,
+          [userId, "quiz", quizId, pointsEarned]
+        );
       }
       await db.query(`COMMIT`);
 
@@ -735,25 +759,187 @@ export const submitQuiz = async(req, res, next) => {
         correctOption: quiz.correct_option,
         isCorrect,
         pointsEarned,
-        message: isCorrect ? 'Correct answer!' : 'Wrong answer, better luck next time!'
+        message: isCorrect
+          ? "Correct answer!"
+          : "Wrong answer, better luck next time!",
       };
 
       return apiResponse(res, {
         error: false,
         code: 200,
         status: 1,
-        message : 'Quiz submitted succesfully',
-        payload : response
+        message: "Quiz submitted succesfully",
+        payload: response,
       });
-
-       
-    }catch(err) {
-      await db.query('ROLLBACK');
+    } catch (err) {
+      await db.query("ROLLBACK");
       throw err;
     }
-    
-  }catch(err) { 
-    next(err)
+  } catch (err) {
+    next(err);
   }
-}
+};
 
+// API endpoint for generating QR
+export const generateQR = async (req, res, next) => {
+  try {
+    const gurudwaraId = req.params.id;
+
+    // Check if gurudwara exists
+    const gurudwara = await db.query("SELECT * FROM gurudwaras WHERE id = ?", [
+      gurudwaraId,
+    ]);
+
+    if (gurudwara.length === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 404,
+        status: 0,
+        message: "Gurudwara not found",
+      });
+    }
+
+    const qrResult = await generateGurudwaraQR(gurudwaraId);
+
+    const response = {
+      data: qrResult,
+    };
+
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: "Qr scanned succesfully",
+      payload: response,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// // API to get existing QR code
+// app.get("/admin/gurudwara/:id/qr", async (req, res) => {
+//   try {
+//     const gurudwaraId = req.params.id;
+
+//     const result = await db.query(
+//       "SELECT name, qr_code_url FROM gurudwaras WHERE id = ?",
+//       [gurudwaraId]
+//     );
+
+//     if (result.length === 0) {
+//       return res.status(404).json({ error: "Gurudwara not found" });
+//     }
+
+//     res.json({
+//       success: true,
+//       data: {
+//         name: result[0].name,
+//         qrCodeUrl: result[0].qr_code_url,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       error: error.message,
+//     });
+//   }
+// });
+
+export const scanQrCode = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return apiResponse(res, {
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User is not authenticated",
+      });
+    }
+
+    const { qrData } = req.body;
+
+    let parsedQrData;
+    try {
+      parsedQrData = JSON.parse(qrData);
+    } catch (err) {
+      console.error(err);
+    }
+
+    if (parsedQrData.visit !== "gurudwara_vist" || !parsedQrData.id) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Invalid QR code type",
+      });
+    }
+
+    const gurudwaraId = parsedQrData.id;
+
+    //Check if the gurudwara exists with this id
+    const [checkGurudwara] = await db.query(
+      `SELECT * FROM gurudwaras WHERE id = ? AND status = '1'`,
+      [gurudwaraId]
+    );
+    if (checkGurudwara.length === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 404,
+        status: 0,
+        message: "No gurudwara found",
+      });
+    }
+
+    // Check if user already scanned the qr today
+    const todayDate = new Date().toISOString().split(" ")[0];
+    const [checkLog] = await db.query(
+      `SELECT * FROM points_earned 
+      WHERE user_id = ? AND gurudwara_id = ? AND reward_type = 'qr_scanned 
+      WHERE DATE(created_at) = ?'`,
+      [userId, gurudwaraId, todayDate]
+    );
+
+    if (checkLog.length !== 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "You have already scanned this QR code today!",
+      });
+    }
+
+    // Award points (you can make this configurable)
+    const pointsToAward = 10; // Default points for QR scan
+
+    // Insert points record
+    await db.query(
+      `INSERT INTO points_earned (user_id, reward_type, gurudwara_id, points) 
+             VALUES (?, 'qr_scanned', ?, ?)`,
+      [userId, gurudwaraId, pointsToAward]
+    );
+
+    // Get user's total points
+    const totalPointsResult = await db.query(
+      "SELECT SUM(points) as total_points FROM points_earned WHERE user_id = ?",
+      [userId]
+    );
+
+    const totalPoints = totalPointsResult[0].total_points || 0;
+
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: `Congratulations! You earned ${pointsToAward} points for visiting ${gurudwara[0].name}!`,
+      payload: {
+        points: pointsToAward,
+        totalPoints: totalPoints,
+        gurudwaraName: gurudwara[0].name,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
