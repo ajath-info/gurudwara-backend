@@ -7,6 +7,7 @@ export const createDbSchema = async ()=> {
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL DEFAULT '',
             phone VARCHAR(10) NOT NULL,
+            profile_image TEXT NOT NULL DEFAULT '',
             fcm_token TEXT NOT NULL DEFAULT '',
             device_type ENUM('A','I','W') NOT NULL DEFAULT 'W',
             status ENUM('1', '2') NOT NULL DEFAULT '1',

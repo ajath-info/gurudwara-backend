@@ -37,5 +37,32 @@ apiRouter.post(
   verifyToken,
   MOBILEAPI.generateQR
 );
+apiRouter.post(
+  "/favouriteGurudwara/:id",
+  verifyToken,
+  multerMiddleware,
+  MOBILEAPI.addFavouriteGurudwara
+);
 
+// Get Favourite Gurudwaras
+apiRouter.get(
+  "/getFavouriteGurudwara",
+  verifyOtp,
+  MOBILEAPI.getFavouriteGurudwaras
+);
+
+// Search Gurudwaras
+apiRouter.get(
+  "/searchGurudwara",
+  verifyToken,
+  MOBILEAPI.advancedSearchGurudwaras
+);
+
+// Edit user
+apiRouter.post(
+  "/updateUser",
+  multerMiddleware,
+  verifyToken,
+  MOBILEAPI.editProfile
+);
 export default apiRouter;

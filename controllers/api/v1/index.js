@@ -195,19 +195,20 @@ export const updateUserName = async (req, res, next) => {
         message: "Error in updating the name",
       });
     }
-    const [updatedUser] = await db.query(
-      `SELECT * FROM users WHERE id = ?`,
+    const [updatedUser] = await db.query(`SELECT * FROM users WHERE id = ?`, [
+      userId,
+    ]);
+
+    // Get the token
+    const [tokenRow] = await db.query(
+      `SELECT * FROM tokens WHERE user_id = ?`,
       [userId]
     );
-
-    // Get the token 
-    const [tokenRow] = await db.query(`SELECT * FROM tokens WHERE user_id = ?`,[userId]);
     const token = tokenRow[0];
     const user = updatedUser[0];
     const response = {
-      token : token.token,
-      ...user
-
+      token: token.token,
+      ...user,
     };
 
     return apiResponse(res, {
@@ -236,24 +237,68 @@ export const getAllGurudwaras = async (req, res, next) => {
     const userLat = parseFloat(req.query.lat);
     const userLng = parseFloat(req.query.lng);
 
-    // Build query based on whether user location is provided
-    let query = `SELECT * FROM gurudwaras WHERE status = '1'`;
-    let countQuery = `SELECT COUNT(*) as total FROM gurudwaras WHERE status = '1'`;
+    // Validate coordinates if provided
+    const hasValidCoordinates =
+      userLat &&
+      userLng &&
+      !isNaN(userLat) &&
+      !isNaN(userLng) &&
+      userLat >= -90 &&
+      userLat <= 90 &&
+      userLng >= -180 &&
+      userLng <= 180;
 
-    // Add distance calculation if user coordinates are provided
-    if (userLat && userLng) {
+    // Build base query with favourite status
+    let baseQuery = `
+      SELECT g.*,
+        CASE 
+          WHEN fg.id IS NOT NULL THEN 1 
+          ELSE 0 
+        END AS is_favourite
+      FROM gurudwaras g 
+      LEFT JOIN favourite_gurudwaras fg ON g.id = fg.gurudwara_id 
+        AND fg.user_id = ? 
+        AND fg.status = '1'
+      WHERE g.status = '1'
+    `;
+
+    // Count query (should match the main query conditions)
+    let countQuery = `
+      SELECT COUNT(*) as total 
+      FROM gurudwaras g 
+      WHERE g.status = '1'
+    `;
+
+    let query;
+    let queryParams;
+
+    // Add distance calculation if user coordinates are valid
+    if (hasValidCoordinates) {
       query = `
-        SELECT *, 
-        (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * 
-        cos(radians(longitude) - radians(?)) + 
-        sin(radians(?)) * sin(radians(latitude)))) AS distance
-        FROM gurudwaras 
-        WHERE status = '1' 
+        SELECT g.*,
+        CASE 
+          WHEN fg.id IS NOT NULL THEN 1 
+          ELSE 0 
+        END AS is_favourite,
+        (6371 * acos(
+          GREATEST(-1, LEAST(1,
+            cos(radians(?)) * cos(radians(g.latitude)) * 
+            cos(radians(g.longitude) - radians(?)) + 
+            sin(radians(?)) * sin(radians(g.latitude))
+          ))
+        )) AS distance
+        FROM gurudwaras g 
+        LEFT JOIN favourite_gurudwaras fg ON g.id = fg.gurudwara_id 
+          AND fg.user_id = ? 
+          AND fg.status = '1'
+        WHERE g.status = '1' 
         ORDER BY distance ASC
         LIMIT ? OFFSET ?
       `;
+      queryParams = [userLat, userLng, userLat, userId, limit, offset];
     } else {
-      query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+      query = baseQuery + ` ORDER BY g.created_at DESC LIMIT ? OFFSET ?`;
+      queryParams = [userId, limit, offset];
     }
 
     // Get total count for pagination
@@ -261,18 +306,7 @@ export const getAllGurudwaras = async (req, res, next) => {
     const total = countResult[0].total;
 
     // Get gurudwaras
-    let gurudwaraRows;
-    if (userLat && userLng) {
-      [gurudwaraRows] = await db.query(query, [
-        userLat,
-        userLng,
-        userLat,
-        limit,
-        offset,
-      ]);
-    } else {
-      [gurudwaraRows] = await db.query(query, [limit, offset]);
-    }
+    const [gurudwaraRows] = await db.query(query, queryParams);
 
     // Format the response data
     const gurudwaras = gurudwaraRows.map((gurudwara) => ({
@@ -286,6 +320,7 @@ export const getAllGurudwaras = async (req, res, next) => {
       latitude: parseFloat(gurudwara.latitude),
       longitude: parseFloat(gurudwara.longitude),
       qr_code_url: gurudwara.qr_code_url,
+      is_favourite: gurudwara.is_favourite ? 1 : 0,
       distance: gurudwara.distance
         ? parseFloat(gurudwara.distance).toFixed(2)
         : null,
@@ -314,6 +349,135 @@ export const getAllGurudwaras = async (req, res, next) => {
       code: 200,
       status: 1,
       message: "Gurudwaras fetched successfully",
+      payload: response,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Alternative version if you want to get ONLY favourite gurudwaras
+export const getFavouriteGurudwaras = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const userId = user.id;
+
+    // Extract query parameters with defaults
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Get user's location for distance calculation
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+
+    // Validate coordinates if provided
+    const hasValidCoordinates =
+      userLat &&
+      userLng &&
+      !isNaN(userLat) &&
+      !isNaN(userLng) &&
+      userLat >= -90 &&
+      userLat <= 90 &&
+      userLng >= -180 &&
+      userLng <= 180;
+
+    // Count query for favourites only
+    let countQuery = `
+      SELECT COUNT(*) as total 
+      FROM gurudwaras g 
+      INNER JOIN favourite_gurudwaras fg ON g.id = fg.gurudwara_id 
+      WHERE g.status = '1' 
+        AND fg.user_id = ? 
+        AND fg.status = '1'
+    `;
+
+    let query;
+    let queryParams;
+
+    // Add distance calculation if user coordinates are valid
+    if (hasValidCoordinates) {
+      query = `
+        SELECT g.*,
+        1 AS is_favourite,
+        (6371 * acos(
+          GREATEST(-1, LEAST(1,
+            cos(radians(?)) * cos(radians(g.latitude)) * 
+            cos(radians(g.longitude) - radians(?)) + 
+            sin(radians(?)) * sin(radians(g.latitude))
+          ))
+        )) AS distance
+        FROM gurudwaras g 
+        INNER JOIN favourite_gurudwaras fg ON g.id = fg.gurudwara_id 
+        WHERE g.status = '1' 
+          AND fg.user_id = ? 
+          AND fg.status = '1'
+        ORDER BY distance ASC
+        LIMIT ? OFFSET ?
+      `;
+      queryParams = [userLat, userLng, userLat, userId, limit, offset];
+    } else {
+      query = `
+        SELECT g.*, 1 AS is_favourite
+        FROM gurudwaras g 
+        INNER JOIN favourite_gurudwaras fg ON g.id = fg.gurudwara_id 
+        WHERE g.status = '1' 
+          AND fg.user_id = ? 
+          AND fg.status = '1'
+        ORDER BY fg.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+      queryParams = [userId, limit, offset];
+    }
+
+    // Get total count for pagination
+    const [countResult] = await db.query(countQuery, [userId]);
+    const total = countResult[0].total;
+
+    // Get favourite gurudwaras
+    const [gurudwaraRows] = await db.query(query, queryParams);
+
+    // Format the response data
+    const gurudwaras = gurudwaraRows.map((gurudwara) => ({
+      id: gurudwara.id,
+      name: gurudwara.name,
+      address: gurudwara.address,
+      image_urls:
+        typeof gurudwara.image_urls === "string"
+          ? JSON.parse(gurudwara.image_urls)
+          : gurudwara.image_urls,
+      latitude: parseFloat(gurudwara.latitude),
+      longitude: parseFloat(gurudwara.longitude),
+      qr_code_url: gurudwara.qr_code_url,
+      is_favourite: Boolean(gurudwara.is_favourite),
+      distance: gurudwara.distance
+        ? parseFloat(gurudwara.distance).toFixed(2)
+        : null,
+      created_at: formatDateTime(gurudwara.created_at),
+    }));
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    const response = {
+      gurudwaras,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limit,
+        hasNextPage,
+        hasPrevPage,
+      },
+    };
+
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: "Favourite gurudwaras fetched successfully",
       payload: response,
     });
   } catch (err) {
@@ -374,49 +538,6 @@ export const addFavouriteGurudwara = async (req, res, next) => {
   }
 };
 
-export const getAllFavouriteGurudwaras = async (req, res, next) => {
-  try {
-    const user = req.user;
-    const userId = user.id;
-
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
-
-    const [rows] = await db.query(
-      `SELECT * FROM favourite_gurudwaras WHERE user_id = ? AND status = '1' LIMIT ? OFFSET ? `,
-      [userId, limit, offset]
-    );
-    if (rows.length === 0) {
-      return apiResponse(res, {
-        error: false,
-        code: 404,
-        status: 0,
-        message: "No favourite gurudwaras found",
-      });
-    }
-
-    const favouriteGurudwaras = rows.map((r) => ({
-      id: r.id,
-      user_id: r.user_id,
-      gurudwara_id: r.gurudwara_id,
-      created_at: formatDateTime(r.created_at),
-    }));
-    return apiResponse(res, {
-      error: false,
-      code: 200,
-      status: 1,
-      message: "Favourite gurudwaras found successfully",
-      payload: {
-        favouriteGurudwaras,
-        page,
-        limit,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-};
 /**
  *
  * @param {*} req
@@ -495,7 +616,7 @@ export const getGurudwaraDetails = async (req, res, next) => {
       });
     }
 
-    const gurudwaraId  = req.params.id;
+    const gurudwaraId = req.params.id;
     if (!gurudwaraId) {
       return apiResponse(res, {
         error: true,
@@ -704,71 +825,135 @@ export const submitQuiz = async (req, res, next) => {
         message: "User is not authenticated",
       });
     }
-    const { quizId, selectedOption } = req.body;
 
-    // Check if the quiz exists
-    const [checkQuiz] = await db.query(
-      `SELECT * FROM quizzes WHERE id = ? AND status = '1'`,
-      [quizId]
-    );
-    if (checkQuiz.length === 0) {
-      return apiResponse(res, {
-        error: true,
-        code: 404,
-        status: 0,
-        message: "No such quiz found",
-      });
-    }
-    // Check if the user has already submitted the quiz
-    const [checkSubmission] = await db.query(
-      `SELECT * FROM quiz_submissions WHERE user_id = ? AND quiz_id = ?`,
-      [userId, quizId]
-    );
-    if (checkSubmission.length !== 0) {
+    const { quizzes } = req.body; // Expected format: [{ quizId: 1, selectedOption: 2 }, ...]
+
+    if (!quizzes || !Array.isArray(quizzes) || quizzes.length === 0) {
       return apiResponse(res, {
         error: true,
         code: 400,
         status: 0,
-        message: "You have already submitted this quiz",
+        message:
+          "Invalid quiz data. Expected array of quizzes with quizId and selectedOption",
       });
     }
 
-    // Submit the quiz
-    const quiz = checkQuiz[0];
-    const isCorrect = Number(selectedOption) === quiz.correct_option;
-    const pointsEarned = isCorrect ? quiz.points : 0;
+    const quizIds = quizzes.map((q) => q.quizId);
+
+    // Check if all quizzes exist
+    const [checkQuizzes] = await db.query(
+      `SELECT * FROM quizzes WHERE id IN (${quizIds
+        .map(() => "?")
+        .join(",")}) AND status = '1'`,
+      quizIds
+    );
+
+    if (checkQuizzes.length !== quizIds.length) {
+      return apiResponse(res, {
+        error: true,
+        code: 404,
+        status: 0,
+        message: "One or more quizzes not found",
+      });
+    }
+
+    // Check if the user has already submitted any of these quizzes
+    const [checkSubmissions] = await db.query(
+      `SELECT quiz_id FROM quiz_submissions WHERE user_id = ? AND quiz_id IN (${quizIds
+        .map(() => "?")
+        .join(",")})`,
+      [userId, ...quizIds]
+    );
+
+    if (checkSubmissions.length > 0) {
+      const alreadySubmitted = checkSubmissions.map((s) => s.quiz_id);
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: `You have already submitted quiz(es): ${alreadySubmitted.join(
+          ", "
+        )}`,
+      });
+    }
+
+    // Create a map of quiz data for easy lookup
+    const quizMap = {};
+    checkQuizzes.forEach((quiz) => {
+      quizMap[quiz.id] = quiz;
+    });
+
+    const results = [];
+    let totalPointsEarned = 0;
+    let totalPossiblePoints = 0;
 
     await db.query(`START TRANSACTION`);
-    try {
-      const [submission] = await db.query(
-        `INSERT INTO quiz_submissions (user_id, quiz_id, selected_option, is_correct, points_earned) VALUES (?,?,?,?,?)`,
-        [userId, quizId, selectedOption, isCorrect, pointsEarned]
-      );
 
-      if (isCorrect) {
+    try {
+      // Process each quiz submission
+      for (const quizSubmission of quizzes) {
+        const { quizId, selectedOption } = quizSubmission;
+        const quiz = quizMap[quizId];
+
+        if (!quiz) {
+          throw new Error(`Quiz ${quizId} not found`);
+        }
+
+        const isCorrect = Number(selectedOption) === quiz.correct_option;
+        const pointsEarned = isCorrect ? quiz.points : 0;
+
+        totalPointsEarned += pointsEarned;
+        totalPossiblePoints += quiz.points;
+
+        // Insert quiz submission
         await db.query(
-          `INSERT INTO points_earned (user_id, reward_type, quiz_id, points) VALUES (?,?,?,?)`,
-          [userId, "quiz", quizId, pointsEarned]
+          `INSERT INTO quiz_submissions (user_id, quiz_id, selected_option, is_correct, points_earned) VALUES (?,?,?,?,?)`,
+          [userId, quizId, selectedOption, isCorrect, pointsEarned]
         );
+
+        // Insert points earned if correct
+        if (isCorrect) {
+          await db.query(
+            `INSERT INTO points_earned (user_id, reward_type, quiz_id, points) VALUES (?,?,?,?)`,
+            [userId, "quiz", quizId, pointsEarned]
+          );
+        }
+
+        // Add to results
+        results.push({
+          quizId,
+          selectedOption,
+          correctOption: quiz.correct_option,
+          isCorrect,
+          pointsEarned,
+          quizPoints: quiz.points,
+          message: isCorrect
+            ? "Correct answer!"
+            : "Wrong answer, better luck next time!",
+        });
       }
+
       await db.query(`COMMIT`);
 
       const response = {
-        quizId,
-        selectedOption,
-        correctOption: quiz.correct_option,
-        isCorrect,
-        pointsEarned,
-        message: isCorrect
-          ? "Correct answer!"
-          : "Wrong answer, better luck next time!",
+        quizResults: results,
+        summary: {
+          totalQuizzes: quizzes.length,
+          correctAnswers: results.filter((r) => r.isCorrect).length,
+          totalPointsEarned,
+          totalPossiblePoints,
+          percentage:
+            totalPossiblePoints > 0
+              ? ((totalPointsEarned / totalPossiblePoints) * 100).toFixed(2)
+              : 0,
+        },
       };
 
       return apiResponse(res, {
         error: false,
         code: 200,
         status: 1,
-        message: "Quiz submitted succesfully",
+        message: "Quizzes submitted successfully",
         payload: response,
       });
     } catch (err) {
@@ -879,11 +1064,11 @@ export const scanQrCode = async (req, res, next) => {
     const gurudwaraId = parsedQrData.id;
 
     //Check if the gurudwara exists with this id
-    const [checkGurudwara] = await db.query(
+    const [gurudwara] = await db.query(
       `SELECT * FROM gurudwaras WHERE id = ? AND status = '1'`,
       [gurudwaraId]
     );
-    if (checkGurudwara.length === 0) {
+    if (gurudwara.length === 0) {
       return apiResponse(res, {
         error: true,
         code: 404,
@@ -939,6 +1124,340 @@ export const scanQrCode = async (req, res, next) => {
         gurudwaraName: gurudwara[0].name,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ *
+ */
+// Advanced search with multiple filters
+export const advancedSearchGurudwaras = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const userId = user.id;
+
+    // Extract query parameters with defaults
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Search parameters
+    const searchTerm = req.query.search?.trim();
+    const searchBy = req.query.searchBy || "all";
+
+    // Location parameters
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+    const maxDistance = parseFloat(req.query.maxDistance); // in kilometers
+
+    // Filters
+    const favouritesOnly = req.query.favouritesOnly === "true";
+    const sortBy = req.query.sortBy || "relevance";
+    const sortOrder = req.query.sortOrder || "ASC";
+
+    // Validate search term
+    if (!searchTerm || searchTerm.length < 2) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Search term must be at least 2 characters long",
+      });
+    }
+
+    // Validate coordinates if provided
+    const hasValidCoordinates =
+      userLat &&
+      userLng &&
+      !isNaN(userLat) &&
+      !isNaN(userLng) &&
+      userLat >= -90 &&
+      userLat <= 90 &&
+      userLng >= -180 &&
+      userLng <= 180;
+
+    // Build search conditions
+    let searchConditions = "";
+    let searchParams = [];
+
+    const escapedSearchTerm = `%${searchTerm}%`;
+
+    switch (searchBy) {
+      case "name":
+        searchConditions = "AND g.name LIKE ?";
+        searchParams = [escapedSearchTerm];
+        break;
+      case "address":
+        searchConditions = "AND g.address LIKE ?";
+        searchParams = [escapedSearchTerm];
+        break;
+      case "all":
+      default:
+        searchConditions = "AND (g.name LIKE ? OR g.address LIKE ?)";
+        searchParams = [escapedSearchTerm, escapedSearchTerm];
+        break;
+    }
+
+    // Add favourites filter
+    let joinClause =
+      "LEFT JOIN favourite_gurudwaras fg ON g.id = fg.gurudwara_id AND fg.user_id = ? AND fg.status = '1'";
+    let favouriteCondition = "";
+
+    if (favouritesOnly) {
+      joinClause =
+        "INNER JOIN favourite_gurudwaras fg ON g.id = fg.gurudwara_id AND fg.user_id = ? AND fg.status = '1'";
+    }
+
+    // Build base query
+    let baseQuery = `
+      SELECT g.*,
+        CASE 
+          WHEN fg.id IS NOT NULL THEN 1 
+          ELSE 0 
+        END AS is_favourite
+      FROM gurudwaras g 
+      ${joinClause}
+      WHERE g.status = '1'
+      ${searchConditions}
+      ${favouriteCondition}
+    `;
+
+    let query;
+    let queryParams = [userId, ...searchParams];
+    let countParams = [userId, ...searchParams];
+
+    // Add distance calculation and filtering
+    if (hasValidCoordinates) {
+      let distanceCondition = "";
+      if (maxDistance && !isNaN(maxDistance)) {
+        distanceCondition = "HAVING distance <= ?";
+        queryParams.push(maxDistance);
+        countParams.push(maxDistance);
+      }
+
+      query = `
+        SELECT g.*,
+        CASE 
+          WHEN fg.id IS NOT NULL THEN 1 
+          ELSE 0 
+        END AS is_favourite,
+        (6371 * acos(
+          GREATEST(-1, LEAST(1,
+            cos(radians(?)) * cos(radians(g.latitude)) * 
+            cos(radians(g.longitude) - radians(?)) + 
+            sin(radians(?)) * sin(radians(g.latitude))
+          ))
+        )) AS distance
+        FROM gurudwaras g 
+        ${joinClause}
+        WHERE g.status = '1' 
+        ${searchConditions}
+        ${distanceCondition}
+      `;
+      queryParams = [userLat, userLng, userLat, userId, ...searchParams];
+      if (maxDistance && !isNaN(maxDistance)) {
+        queryParams.push(maxDistance);
+      }
+    } else {
+      query = baseQuery;
+    }
+
+    // Count query (simplified for performance)
+    let countQuery = `
+      SELECT COUNT(*) as total 
+      FROM gurudwaras g 
+      ${joinClause}
+      WHERE g.status = '1'
+      ${searchConditions}
+    `;
+
+    // Add sorting
+    let orderByClause = "";
+    switch (sortBy) {
+      case "distance":
+        if (hasValidCoordinates) {
+          orderByClause = `ORDER BY distance ${sortOrder}`;
+        } else {
+          orderByClause = `ORDER BY g.created_at DESC`;
+        }
+        break;
+      case "name":
+        orderByClause = `ORDER BY g.name ${sortOrder}`;
+        break;
+      case "created_at":
+        orderByClause = `ORDER BY g.created_at ${sortOrder}`;
+        break;
+      case "relevance":
+      default:
+        orderByClause = `ORDER BY g.name ASC`;
+        break;
+    }
+
+    // Add pagination
+    query += ` ${orderByClause} LIMIT ? OFFSET ?`;
+    queryParams.push(limit, offset);
+
+    // Get total count for pagination
+    const [countResult] = await db.query(countQuery, countParams);
+    const total = countResult[0].total;
+
+    // Get search results
+    const [gurudwaraRows] = await db.query(query, queryParams);
+
+    // Format the response data
+    const gurudwaras = gurudwaraRows.map((gurudwara) => ({
+      id: gurudwara.id,
+      name: gurudwara.name,
+      address: gurudwara.address,
+      image_urls:
+        typeof gurudwara.image_urls === "string"
+          ? JSON.parse(gurudwara.image_urls)
+          : gurudwara.image_urls,
+      latitude: parseFloat(gurudwara.latitude),
+      longitude: parseFloat(gurudwara.longitude),
+      qr_code_url: gurudwara.qr_code_url,
+      is_favourite: gurudwara.is_favourite ? 1 : 0,
+      distance: gurudwara.distance
+        ? parseFloat(gurudwara.distance).toFixed(2)
+        : null,
+      created_at: formatDateTime(gurudwara.created_at),
+    }));
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    const response = {
+      gurudwaras,
+      searchInfo: {
+        searchTerm,
+        searchBy,
+        sortBy,
+        sortOrder,
+        favouritesOnly,
+        maxDistance: maxDistance || null,
+        resultsFound: total,
+      },
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limit,
+        hasNextPage,
+        hasPrevPage,
+      },
+    };
+
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message:
+        total > 0
+          ? `Found ${total} gurudwara(s) matching your search`
+          : "No gurudwaras found matching your search criteria",
+      payload: response,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+export const editProfile = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return apiResponse(res, {
+        error: true,
+        code: 401,
+        status: 0,
+        message : 'User not authenticated'
+      });
+    }
+
+    const { name, phone, profileImage } = req.body;
+    
+    const errors = [];
+    if (name && (name.length === 0 || name.length > 150)) {
+      errors.push("Name must be in between 1 to 150 characters");
+    }
+
+    if (phone) {
+      if (!validator.isMobilePhone(phone)) {
+        errors.push("Enter a valid phone number");
+      }
+    }
+
+    if (profileImage && !validator.isURL(profileImage)) {
+      errors.push("Enter a valid profile image");
+    }
+
+    if(errors.length > 0) { 
+      return apiResponse(res, {
+        error : true, 
+        code : 400, 
+        status : 0,
+        message : errors[0]
+      })
+    }
+
+    const updateFields = {};
+    if(name) updateFields.name = name; 
+    if(profileImage) updateFields.profile_image = profileImage; 
+    if(phone) updateFields.phone = phone; 
+
+    if(Object.keys(updateFields).length === 0) {
+      return apiResponse(res, {
+        error : true, 
+        code : 400,
+        status : 0,
+        message : 'No fields to update'
+      })
+    }
+
+    const setClause = Object.keys(updateFields).map((key)=> `${key} = ?`).join(', ');
+   
+    const values = [...Object.values(updateFields), userId]
+
+
+    const [insert] = await db.query(`UPDATE users SET ${setClause} WHERE id = ? AND status = '1'`,values);
+    if(insert.affectedRows === 0) {
+      return apiResponse(res, {
+        error : true, 
+        code : 400, 
+        status : 0, 
+        message : 'Error in updating the user'
+      })
+    }
+
+    // Fetched the updated user 
+    const [updatedUser] = await db.query(`SELECT * FROM users WHERE id = ? AND status = '1'`,[userId]);
+
+    // Prepare response
+    const response = { 
+      name : updatedUser[0].name,
+      phone : updatedUser[0].phone, 
+      profile_image : updatedUser[0].profile_image
+
+    }
+
+    return apiResponse(res, {
+      error : false, 
+      code : 200, 
+      status : 1, 
+      message : 'User updated succesfully',
+      payload : response
+    })
   } catch (err) {
     next(err);
   }
