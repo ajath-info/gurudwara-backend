@@ -32,8 +32,11 @@ const limiter = rateLimit({
   });
 app.use(limiter);
 
-
+app.get('/',()=>{
+  return res.json({message:"Welcome to the API"});
+})
 app.use('/api/v1', apiRouter);
+
 app.use(apiResponseError);
 
 (async()=> {
