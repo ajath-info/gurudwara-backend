@@ -1367,11 +1367,11 @@ export const advancedSearchGurudwaras = async (req, res, next) => {
 };
 
 /**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
+ *
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ * @returns
  */
 export const editProfile = async (req, res, next) => {
   try {
@@ -1381,12 +1381,12 @@ export const editProfile = async (req, res, next) => {
         error: true,
         code: 401,
         status: 0,
-        message : 'User not authenticated'
+        message: "User not authenticated",
       });
     }
 
     const { name, phone, profileImage } = req.body;
-    
+
     const errors = [];
     if (name && (name.length === 0 || name.length > 150)) {
       errors.push("Name must be in between 1 to 150 characters");
@@ -1402,62 +1402,130 @@ export const editProfile = async (req, res, next) => {
       errors.push("Enter a valid profile image");
     }
 
-    if(errors.length > 0) { 
+    if (errors.length > 0) {
       return apiResponse(res, {
-        error : true, 
-        code : 400, 
-        status : 0,
-        message : errors[0]
-      })
+        error: true,
+        code: 400,
+        status: 0,
+        message: errors[0],
+      });
     }
 
     const updateFields = {};
-    if(name) updateFields.name = name; 
-    if(profileImage) updateFields.profile_image = profileImage; 
-    if(phone) updateFields.phone = phone; 
+    if (name) updateFields.name = name;
+    if (profileImage) updateFields.profile_image = profileImage;
+    if (phone) updateFields.phone = phone;
 
-    if(Object.keys(updateFields).length === 0) {
+    if (Object.keys(updateFields).length === 0) {
       return apiResponse(res, {
-        error : true, 
-        code : 400,
-        status : 0,
-        message : 'No fields to update'
-      })
+        error: true,
+        code: 400,
+        status: 0,
+        message: "No fields to update",
+      });
     }
 
-    const setClause = Object.keys(updateFields).map((key)=> `${key} = ?`).join(', ');
-   
-    const values = [...Object.values(updateFields), userId]
+    const setClause = Object.keys(updateFields)
+      .map((key) => `${key} = ?`)
+      .join(", ");
 
+    const values = [...Object.values(updateFields), userId];
 
-    const [insert] = await db.query(`UPDATE users SET ${setClause} WHERE id = ? AND status = '1'`,values);
-    if(insert.affectedRows === 0) {
+    const [insert] = await db.query(
+      `UPDATE users SET ${setClause} WHERE id = ? AND status = '1'`,
+      values
+    );
+    if (insert.affectedRows === 0) {
       return apiResponse(res, {
-        error : true, 
-        code : 400, 
-        status : 0, 
-        message : 'Error in updating the user'
-      })
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Error in updating the user",
+      });
     }
 
-    // Fetched the updated user 
-    const [updatedUser] = await db.query(`SELECT * FROM users WHERE id = ? AND status = '1'`,[userId]);
+    // Fetched the updated user
+    const [updatedUser] = await db.query(
+      `SELECT * FROM users WHERE id = ? AND status = '1'`,
+      [userId]
+    );
 
     // Prepare response
-    const response = { 
-      name : updatedUser[0].name,
-      phone : updatedUser[0].phone, 
-      profile_image : updatedUser[0].profile_image
-
-    }
+    const response = {
+      name: updatedUser[0].name,
+      phone: updatedUser[0].phone,
+      profile_image: updatedUser[0].profile_image,
+    };
 
     return apiResponse(res, {
-      error : false, 
-      code : 200, 
-      status : 1, 
-      message : 'User updated succesfully',
-      payload : response
-    })
+      error: false,
+      code: 200,
+      status: 1,
+      message: "User updated succesfully",
+      payload: response,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getTermsCondition = async (req, res, next) => {
+  try {
+    const [rows] = await db.query(`SELECT * FROM term_conditions`);
+
+    if (rows.length === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 404,
+        status: 0,
+        message: "Terms and conditions not found",
+        payload: {},
+      });
+    }
+    const termsCondition = rows[0];
+
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: "Terms and conditions found",
+      payload: {
+        id: termsCondition.id,
+        title: termsCondition.title,
+        description: termsCondition.description,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getPrivacyPolicy = async (req, res, next) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM privacy_policy");
+
+    if (rows.length === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 404,
+        status: 0,
+        message: "Privacy policy not found",
+        payload: {},
+      });
+    }
+
+    const privacyPolicy = rows[0];
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: "Privacy policy found",
+      payload: {
+        id: privacyPolicy.id,
+        title: privacyPolicy.title,
+        description: privacyPolicy.description,
+      },
+    });
   } catch (err) {
     next(err);
   }

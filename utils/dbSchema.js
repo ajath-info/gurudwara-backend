@@ -1,9 +1,9 @@
-import {db} from './db.js'
+import { db } from "./db.js";
 
-export const createDbSchema = async ()=> { 
-    try { 
-        // Users
-        await db.query(`CREATE TABLE IF NOT EXISTS users(
+export const createDbSchema = async () => {
+  try {
+    // Users
+    await db.query(`CREATE TABLE IF NOT EXISTS users(
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL DEFAULT '',
             phone VARCHAR(10) NOT NULL,
@@ -15,7 +15,7 @@ export const createDbSchema = async ()=> {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )`);
 
-        await db.query(`CREATE TABLE IF NOT EXISTS tokens(
+    await db.query(`CREATE TABLE IF NOT EXISTS tokens(
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
             token TEXT NOT NULL, 
@@ -23,7 +23,7 @@ export const createDbSchema = async ()=> {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
 
-        await db.query(`CREATE TABLE IF NOT EXISTS otps( 
+    await db.query(`CREATE TABLE IF NOT EXISTS otps( 
             id INT AUTO_INCREMENT PRIMARY KEY, 
             otp VARCHAR(10) NOT NULL,
             phone VARCHAR(10) NOT NULL,
@@ -31,7 +31,7 @@ export const createDbSchema = async ()=> {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
 
-        await db.query(`CREATE TABLE IF NOT EXISTS gurudwaras(
+    await db.query(`CREATE TABLE IF NOT EXISTS gurudwaras(
             id INT AUTO_INCREMENT PRIMARY KEY, 
             name VARCHAR(255) NOT NULL,
             address VARCHAR(255) NOT NULL,
@@ -43,7 +43,7 @@ export const createDbSchema = async ()=> {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
 
-        await db.query(`CREATE TABLE IF NOT EXISTS rewards(
+    await db.query(`CREATE TABLE IF NOT EXISTS rewards(
             id INT AUTO_INCREMENT PRIMARY KEY,
             gurudwara_id INT NOT NULL, 
             title VARCHAR(255),
@@ -55,7 +55,7 @@ export const createDbSchema = async ()=> {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )`);
 
-        await db.query(`CREATE TABLE IF NOT EXISTS quizzes( 
+    await db.query(`CREATE TABLE IF NOT EXISTS quizzes( 
             id INT AUTO_INCREMENT PRIMARY KEY,
             question TEXT NOT NULL,
             option_1 TEXT NOT NULL,
@@ -68,7 +68,7 @@ export const createDbSchema = async ()=> {
             update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )`);
 
-            await db.query(`CREATE TABLE IF NOT EXISTS quiz_submissions (
+    await db.query(`CREATE TABLE IF NOT EXISTS quiz_submissions (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
             quiz_id INT NOT NULL,
@@ -81,38 +81,38 @@ export const createDbSchema = async ()=> {
             FOREIGN KEY (quiz_id) REFERENCES quizzes(id),
             UNIQUE KEY unique_user_quiz (user_id, quiz_id)
         )`);
-        await db.query(`CREATE TABLE IF NOT EXISTS favourite_gurudwaras(
+    await db.query(`CREATE TABLE IF NOT EXISTS favourite_gurudwaras(
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL, 
             gurudwara_id INT NOT NULL,
             status ENUM('1', '2') NOT NULL DEFAULT '1',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
-            
-        await db.query(`CREATE TABLE IF NOT EXISTS privacy_policy(
+
+    await db.query(`CREATE TABLE IF NOT EXISTS privacy_policy(
             id INT AUTO_INCREMENT PRIMARY KEY,
             title VARCHAR(255) NOT NULL,
             description TEXT NOT NULL,
             status ENUM('1', '2') NOT NULL DEFAULT '1',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-         )`)
-        
-        await db.query(`CREATE TABLE IF NOT EXISTS terms_conditions(
+         )`);
+
+    await db.query(`CREATE TABLE IF NOT EXISTS terms_conditions(
             id INT AUTO_INCREMENT PRIMARY KEY,
             title VARCHAR(255) NOT NULL,
             description TEXT NOT NULL,
             status ENUM('1', '2') NOT NULL DEFAULT '1',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`)
-        
-        await db.query(`CREATE TABLE IF NOT EXISTS rewards_redeemed( 
+        )`);
+
+    await db.query(`CREATE TABLE IF NOT EXISTS rewards_redeemed( 
             id INT AUTO_INCREMENT PRIMARY KEY, 
             user_id INT NOT NULL, 
             reward_id INT NOT NULL, 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
-        
-        await db.query(`CREATE TABLE IF NOT EXISTS points_earned(
+
+    await db.query(`CREATE TABLE IF NOT EXISTS points_earned(
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
             reward_type ENUM('quiz','qr_scanned'),
@@ -120,13 +120,28 @@ export const createDbSchema = async ()=> {
             gurudwara_id INT NULL,
             points INT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`)
+        )`);
 
+    await db.query(
+      `CREATE TABLE IF NOT EXISTS term_conditions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          description TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )`
+    );
 
-        
-        console.log('All tables created succesfully')
+    await db.query(`CREATE TABLE IF NOT EXISTS privacy_policy (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          description TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )`);
 
-    }catch(err){ 
-        console.log('Error in creating the schema', err.message)
-    }
-}
+    console.log("All tables created succesfully");
+  } catch (err) {
+    console.log("Error in creating the schema", err.message);
+  }
+};

@@ -5,7 +5,7 @@ import { sendOtp } from "../../../controllers/api/v1/index.js";
 import { verifyOtp } from "../../../controllers/api/v1/index.js";
 import { getAllGurudwaras } from "../../../controllers/api/v1/index.js";
 import * as MOBILEAPI from "../../../controllers/api/v1/index.js";
-import multer from "multer";
+import multer, { MulterError } from "multer";
 
 const apiRouter = express.Router();
 
@@ -31,6 +31,8 @@ apiRouter.post(
   verifyToken,
   MOBILEAPI.submitQuiz
 );
+
+apiRouter.post("/scanQr", multerMiddleware, verifyToken, MOBILEAPI.scanQrCode);
 apiRouter.post(
   "/gurudwara/:id/generateQr",
   multerMiddleware,
