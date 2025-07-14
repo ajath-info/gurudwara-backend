@@ -1474,11 +1474,10 @@ export const editProfile = async (req, res, next) => {
       [userId]
     );
 
+    const user = updatedUser[0];
     // Prepare response
     const response = {
-      name: updatedUser[0].name,
-      phone: updatedUser[0].phone,
-      profile_image: updatedUser[0].profile_image,
+      ...user
     };
 
     return apiResponse(res, {

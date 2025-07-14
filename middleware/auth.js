@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { apiResponse } from "../utils/helper.js";
 import { db } from "../utils/db.js";
-import * as DOTENV from '../utils/dotenv.js';
+import * as DOTENV from "../utils/dotenv.js";
+import { ADMIN_TITLES } from "../utils/constant.js";
 
 export const verifyToken = async (req, res, next) => {
   try {
@@ -73,5 +74,38 @@ export const verifyToken = async (req, res, next) => {
     next();
   } catch (err) {
     next(err);
+  }
+};
+
+export const verifyAdminToken = async (req, res, next) => {
+  try {
+    const token = req.cookies.ADMIN_TOKEN;
+    if (!token) {
+      return res.redirect("/admin/auth/login", {
+        title: ADMIN_TITLES.LOGIN_TITLE,
+      });
+    }
+    const decoded = jwt.verify(token, DOTENV.JWT_SECRET_KEY);
+
+
+    const [admin] = await db.query(
+      `SELECT * FROM admins WHERE id = ? AND status = '1'`,
+      [decoded.id]
+    );
+
+    if (admin.length === 0) {
+      res.clearCookie("ADMIN_TOKEN");
+      return res.redirect("/admin/auth/login", {
+        title: ADMIN_TITLES.LOGIN_TITLE,
+      });
+    }
+
+    const foundAdmin = admin[0];
+    req.admin = foundAdmin;
+    next();
+  } catch (err) {
+    console.error("Jwt validation error", err);
+    res.clearCookie("ADMIN_TOKEN");
+    return res.status(500).redirect("/admin/auth/login");
   }
 };

@@ -149,9 +149,22 @@ export const createDbSchema = async () => {
           visit_time TIME NOT NULL,
           points_awarded INT DEFAULT 0,
           is_first_visit_today BOOLEAN DEFAULT true,
+          latitude DECIMAL(10,8) NOT NULL,
+          longitude DECIMAL(11,8) NOT NULL,
           device_info JSON,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
+
+    await db.query(`CREATE TABLE IF NOT EXISTS admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('super_admin', 'local_admin') NOT NULL DEFAULT 'local_admin',
+    status ENUM('1', '2') NOT NULL DEFAULT '1',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);`);
 
     console.log("All tables created succesfully");
   } catch (err) {

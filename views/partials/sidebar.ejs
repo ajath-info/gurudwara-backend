@@ -1,0 +1,115 @@
+<aside class="w-64 bg-white shadow-lg h-screen fixed left-0 top-0 z-30">
+  <div class="p-6 border-b border-gray-200">
+    <div class="flex items-center space-x-3">
+      <i class="fas fa-mosque text-2xl text-blue-600"></i>
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">GurudwaraAdmin</h1>
+        <p class="text-sm text-gray-500 capitalize">
+          <%= admin.role.replace('_', ' ') %>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="mt-6">
+    <div class="px-3">
+      <!-- Dashboard -->
+      <a
+        href="/admin"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path === '/admin' ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-home w-5"></i>
+        <span class="font-medium">Dashboard</span>
+      </a>
+
+      <!-- Users -->
+      <a
+        href="/admin/users"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/users') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-users w-5"></i>
+        <span class="font-medium">Users</span>
+      </a>
+
+      <!-- Gurudwaras (Super Admin Only) -->
+      <% if (admin.role === 'super_admin') { %>
+      <a
+        href="/admin/gurudwaras"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/gurudwaras') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-map-marker-alt w-5"></i>
+        <span class="font-medium">Gurudwaras</span>
+      </a>
+      <% } %>
+
+      <!-- Rewards -->
+      <a
+        href="/admin/rewards"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/rewards') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-gift w-5"></i>
+        <span class="font-medium"
+          ><%= admin.role === 'local_admin' ? 'My Rewards' : 'Rewards' %></span
+        >
+      </a>
+
+      <!-- Redemptions -->
+      <a
+        href="/admin/redemptions"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/redemptions') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-credit-card w-5"></i>
+        <span class="font-medium">Redemptions</span>
+      </a>
+
+      <!-- Quizzes (Super Admin Only) -->
+      <% if (admin.role === 'super_admin') { %>
+      <a
+        href="/admin/quizzes"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/quizzes') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-question-circle w-5"></i>
+        <span class="font-medium">Quizzes</span>
+      </a>
+      <% } %>
+
+      <!-- Attendance -->
+      <a
+        href="/admin/attendance"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/attendance') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-calendar-check w-5"></i>
+        <span class="font-medium">Attendance</span>
+      </a>
+
+      <!-- Analytics -->
+      <a
+        href="/admin/analytics"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/analytics') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-chart-bar w-5"></i>
+        <span class="font-medium">Analytics</span>
+      </a>
+
+      <!-- Content (Super Admin Only) -->
+      <% if (admin.role === 'super_admin') { %>
+      <a
+        href="/admin/content"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/content') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-file-text w-5"></i>
+        <span class="font-medium">Content</span>
+      </a>
+      <% } %>
+
+      <!-- Settings -->
+      <a
+        href="/admin/settings"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/settings') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+      >
+        <i class="fas fa-cog w-5"></i>
+        <span class="font-medium">Settings</span>
+      </a>
+    </div>
+  </nav>
+</aside>

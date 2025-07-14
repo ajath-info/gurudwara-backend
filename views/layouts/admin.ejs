@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link rel="icon" type="image/png" href="/images/logo.png" />
+    <link rel="stylesheet" href="/stylesheets/index.css" />
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+
+    <!-- fontAwsome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"
+    />
+
+    <!-- aws s3  -->
+    <script src="https://cdn.jsdelivr.net/npm/aws-sdk@2.1417.0/dist/aws-sdk.min.js"></script>
+  </head>
+
+  <body class="bg-bodyTag">
+    <%- include('../partials/toast') %>
+    <div class="flex h-screen overflow-hidden">
+      <!-- Sidebar -->
+      <%- include('../partials/sidebar', {admin : admin, req : req}) %>
+
+      <!-- Main Content -->
+      <div
+        id="mainContentDiv"
+        class="flex-1 flex flex-col overflow-hidden transition duration-300"
+      >
+        <!-- Header -->
+        <%- include('../partials/header', {admin : admin}) %>
+
+        <!-- Main area for pages -->
+        <main class="overflow-y-auto flex-1 bg-gray-50"><%- body %></main>
+
+        <!-- Footer -->
+        <footer
+          class="p-4.5 flex items-center justify-between border-t border-gray-200 bg-white font-medium"
+        >
+          <span class="text-sm text-gray-500"
+            >&copy; <%= new Date().getFullYear() %></span
+          >
+          <span class="text-sm text-gray-500">
+            Powered by
+            <a href="/" class="text-primary hover:underline">Hihlo</a>
+          </span>
+        </footer>
+      </div>
+    </div>
+    <!-- Logout Confirmation Dialog -->
+    <%- include('../partials/logout-confirmation') %>
+
+    <script src="/js/feature/sidebar.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/toast.js"></script>
+    <script src="/js/feature/passwordToggle.js"></script>
+    <script src="/js/uploadImage.js"></script>
+    <script src="/js/logout.js"></script>
+    <script src="/js/modal/profileModal.js"></script>
+    <script src="/js/modal/deleteModal.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script
+      src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"
+      defer
+    ></script>
+  </body>
+</html>
