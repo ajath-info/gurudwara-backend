@@ -1050,6 +1050,12 @@ export const scanQrCode = async (req, res, next) => {
       parsedQrData = JSON.parse(qrData);
     } catch (err) {
       console.error(err);
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Invalid QR code format",
+      });
     }
 
     if (parsedQrData.visit !== "gurudwara_vist" || !parsedQrData.id) {
@@ -1063,11 +1069,12 @@ export const scanQrCode = async (req, res, next) => {
 
     const gurudwaraId = parsedQrData.id;
 
-    //Check if the gurudwara exists with this id
+    // Check if the gurudwara exists and get its points configuration
     const [gurudwara] = await db.query(
       `SELECT * FROM gurudwaras WHERE id = ? AND status = '1'`,
       [gurudwaraId]
     );
+
     if (gurudwara.length === 0) {
       return apiResponse(res, {
         error: true,
@@ -1078,11 +1085,11 @@ export const scanQrCode = async (req, res, next) => {
     }
 
     // Check if user already scanned the qr today
-    const todayDate = new Date().toISOString().split(" ")[0];
+    const todayDate = new Date().toISOString().split("T")[0]; // Fixed: was splitting by space
     const [checkLog] = await db.query(
       `SELECT * FROM points_earned 
-      WHERE user_id = ? AND gurudwara_id = ? AND reward_type = 'qr_scanned 
-      WHERE DATE(created_at) = ?'`,
+       WHERE user_id = ? AND gurudwara_id = ? AND reward_type = 'qr_scanned' 
+       AND DATE(created_at) = ?`, // Fixed: removed extra WHERE and fixed syntax
       [userId, gurudwaraId, todayDate]
     );
 
@@ -1095,18 +1102,35 @@ export const scanQrCode = async (req, res, next) => {
       });
     }
 
-    // Award points (you can make this configurable)
-    const pointsToAward = 10; // Default points for QR scan
+    // Get points from gurudwara configuration
+    const pointsToAward = gurudwara[0].qr_scan_points || 10;
+
+    // Collect device info
+    const deviceInfo = {
+      userAgent: req.headers["user-agent"] || "unknown",
+      ip: req.ip || req.connection.remoteAddress || "unknown",
+      platform: req.headers["x-platform"] || "unknown",
+      appVersion: req.headers["x-app-version"] || "unknown",
+      timestamp: new Date().toISOString(),
+    };
+
+    // Insert attendance record
+    await db.query(
+      `INSERT INTO attendance_logs 
+       (user_id, gurudwara_id, visit_date, visit_time, points_awarded, device_info) 
+       VALUES (?, ?, CURDATE(), CURTIME(), ?, ?)`,
+      [userId, gurudwaraId, pointsToAward, JSON.stringify(deviceInfo)]
+    );
 
     // Insert points record
     await db.query(
       `INSERT INTO points_earned (user_id, reward_type, gurudwara_id, points) 
-             VALUES (?, 'qr_scanned', ?, ?)`,
+       VALUES (?, 'qr_scanned', ?, ?)`,
       [userId, gurudwaraId, pointsToAward]
     );
 
     // Get user's total points
-    const totalPointsResult = await db.query(
+    const [totalPointsResult] = await db.query(
       "SELECT SUM(points) as total_points FROM points_earned WHERE user_id = ?",
       [userId]
     );

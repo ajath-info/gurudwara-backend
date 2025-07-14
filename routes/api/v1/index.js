@@ -49,7 +49,7 @@ apiRouter.post(
 // Get Favourite Gurudwaras
 apiRouter.get(
   "/getFavouriteGurudwara",
-  verifyOtp,
+  verifyToken,
   MOBILEAPI.getFavouriteGurudwaras
 );
 

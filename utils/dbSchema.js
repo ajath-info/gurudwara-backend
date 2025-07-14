@@ -6,7 +6,7 @@ export const createDbSchema = async () => {
     await db.query(`CREATE TABLE IF NOT EXISTS users(
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL DEFAULT '',
-            phone VARCHAR(10) NOT NULL,
+            phone VARCHAR(10) NOT NULL, 
             profile_image TEXT NOT NULL DEFAULT '',
             fcm_token TEXT NOT NULL DEFAULT '',
             device_type ENUM('A','I','W') NOT NULL DEFAULT 'W',
@@ -39,6 +39,7 @@ export const createDbSchema = async () => {
             latitude DECIMAL(10,8) NOT NULL,
             longitude DECIMAL(11,8) NOT NULL,
             qr_code_url TEXT NOT NULL,
+            qr_scan_points INT NOT NULL DEFAULT 10,
             status ENUM('1', '2') NOT NULL DEFAULT '1',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
@@ -139,6 +140,18 @@ export const createDbSchema = async () => {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`);
+
+    await db.query(`CREATE TABLE IF NOT EXISTS attendance_logs(
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          gurudwara_id INT NOT NULL,
+          visit_date DATE NOT NULL,
+          visit_time TIME NOT NULL,
+          points_awarded INT DEFAULT 0,
+          is_first_visit_today BOOLEAN DEFAULT true,
+          device_info JSON,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
 
     console.log("All tables created succesfully");
   } catch (err) {
