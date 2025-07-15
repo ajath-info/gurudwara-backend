@@ -1109,6 +1109,7 @@ export const scanQrCode = async (req, res, next) => {
        AND DATE(created_at) = ?`,
       [userId, gurudwaraId, todayDate]
     );
+    console.log(checkLog);
 
     if (checkLog.length !== 0) {
       return apiResponse(res, {
