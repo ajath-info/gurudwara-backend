@@ -1,0 +1,157 @@
+
+
+<div class="space-y-6 p-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">User Details</h1>
+      <p class="text-gray-600">View user information</p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <a
+        href="/admin/users"
+        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200"
+      >
+        <i class="fas fa-arrow-left mr-2"></i>Back to Users
+      </a>
+      <% if (admin.role === 'super_admin') { %>
+      <a
+        href="/admin/users/<%= user.id %>/edit"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+      >
+        <i class="fas fa-edit mr-2"></i>Edit User
+      </a>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div class="p-6">
+      <div class="space-y-6">
+        <div class="flex items-center space-x-6">
+          <img
+            class="h-24 w-24 rounded-full object-cover"
+            src="<%= user.profile_image || '/images/default-avatar.png' %>"
+            alt="<%= user.name %>"
+            onerror="this.src='/images/default-avatar.png'"
+          />
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900"><%= user.name %></h2>
+            <p class="text-gray-500">User ID: <%= user.id %></p>
+            <div class="mt-2">
+              <% if (user.status === '1') { %>
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+              >
+                <i class="fas fa-check-circle mr-1"></i>Active
+              </span>
+              <% } else { %>
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
+              >
+                <i class="fas fa-times-circle mr-1"></i>Inactive
+              </span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Phone Number</label
+            >
+            <div class="flex items-center">
+              <i class="fas fa-phone text-gray-400 mr-2"></i>
+              <span class="text-lg text-gray-900"><%= user.phone %></span>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Device Type</label
+            >
+            <div class="flex items-center">
+              <% if (user.device_type === 'A') { %>
+              <i class="fab fa-android text-green-500 mr-2"></i>
+              <span class="text-lg text-gray-900">Android</span>
+              <% } else if (user.device_type === 'I') { %>
+              <i class="fab fa-apple text-gray-700 mr-2"></i>
+              <span class="text-lg text-gray-900">iOS</span>
+              <% } else if (user.device_type === 'W') { %>
+              <i class="fas fa-globe text-blue-500 mr-2"></i>
+              <span class="text-lg text-gray-900">Web</span>
+              <% } else { %>
+              <i class="fas fa-question-circle text-gray-400 mr-2"></i>
+              <span class="text-lg text-gray-900">Unknown</span>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Joined Date</label
+            >
+            <div class="flex items-center">
+              <i class="fas fa-calendar text-gray-400 mr-2"></i>
+              <span class="text-lg text-gray-900"
+                ><%= new Date(user.created_at).toLocaleDateString() %></span
+              >
+            </div>
+          </div>
+
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Last Updated</label
+            >
+            <div class="flex items-center">
+              <i class="fas fa-clock text-gray-400 mr-2"></i>
+              <span class="text-lg text-gray-900"
+                ><%= new Date(user.updated_at).toLocaleDateString() %></span
+              >
+            </div>
+          </div>
+
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >FCM Token</label
+            >
+            <div class="flex items-center">
+              <i class="fas fa-key text-gray-400 mr-2"></i>
+              <span class="text-sm text-gray-900 truncate">
+                <%= user.fcm_token ? (user.fcm_token.substring(0, 20) + '...') :
+                'Not available' %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <% if (admin.role === 'super_admin') { %>
+        <div class="border-t pt-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Admin Actions</h3>
+          <div class="flex items-center space-x-4">
+            <a
+              href="/admin/users/<%= user.id %>/edit"
+              class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            >
+              <i class="fas fa-edit mr-2"></i>Edit User
+            </a>
+            <form
+              method="POST"
+              action="/admin/users/<%= user.id %>?_method=DELETE"
+              class="inline"
+              onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.')"
+            >
+              <button
+                type="submit"
+                class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200"
+              >
+                <i class="fas fa-trash mr-2"></i>Delete User
+              </button>
+            </form>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
