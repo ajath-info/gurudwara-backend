@@ -798,8 +798,15 @@ export const getQuizzes = async (req, res, next) => {
       });
     }
 
+    const quizzes = availableQuizzes.map((quiz) => ({
+      id: quiz.id,
+      question: quiz.question,
+      options: [quiz.option_1, quiz.option_2, quiz.option_3, quiz.option_4],
+      correct_option: quiz.correct_option,
+      points: quiz.points,
+    }));
     const response = {
-      quizzes: availableQuizzes,
+      quizzes: quizzes
     };
 
     return apiResponse(res, {
@@ -965,7 +972,7 @@ export const submitQuiz = async (req, res, next) => {
   }
 };
 
-// API endpoint for generating QR
+// Generate QR code endpoint
 export const generateQR = async (req, res, next) => {
   try {
     const gurudwaraId = req.params.id;
@@ -994,7 +1001,7 @@ export const generateQR = async (req, res, next) => {
       error: false,
       code: 200,
       status: 1,
-      message: "Qr scanned succesfully",
+      message: "QR code generated successfully",
       payload: response,
     });
   } catch (err) {
@@ -1058,7 +1065,8 @@ export const scanQrCode = async (req, res, next) => {
       });
     }
 
-    if (parsedQrData.visit !== "gurudwara_vist" || !parsedQrData.id) {
+    // Fixed: changed from 'type' to 'visit' and fixed typo
+    if (parsedQrData.visit !== "gurudwara_visit" || !parsedQrData.id) {
       return apiResponse(res, {
         error: true,
         code: 400,
@@ -1070,7 +1078,7 @@ export const scanQrCode = async (req, res, next) => {
     const gurudwaraId = parsedQrData.id;
 
     // Check if the gurudwara exists and get its points configuration
-    const [gurudwara] = await db.query(
+    const gurudwara = await db.query(
       `SELECT * FROM gurudwaras WHERE id = ? AND status = '1'`,
       [gurudwaraId]
     );
@@ -1085,11 +1093,11 @@ export const scanQrCode = async (req, res, next) => {
     }
 
     // Check if user already scanned the qr today
-    const todayDate = new Date().toISOString().split("T")[0]; // Fixed: was splitting by space
-    const [checkLog] = await db.query(
+    const todayDate = new Date().toISOString().split("T")[0];
+    const checkLog = await db.query(
       `SELECT * FROM points_earned 
        WHERE user_id = ? AND gurudwara_id = ? AND reward_type = 'qr_scanned' 
-       AND DATE(created_at) = ?`, // Fixed: removed extra WHERE and fixed syntax
+       AND DATE(created_at) = ?`,
       [userId, gurudwaraId, todayDate]
     );
 
@@ -1130,7 +1138,7 @@ export const scanQrCode = async (req, res, next) => {
     );
 
     // Get user's total points
-    const [totalPointsResult] = await db.query(
+    const totalPointsResult = await db.query(
       "SELECT SUM(points) as total_points FROM points_earned WHERE user_id = ?",
       [userId]
     );
@@ -1477,7 +1485,7 @@ export const editProfile = async (req, res, next) => {
     const user = updatedUser[0];
     // Prepare response
     const response = {
-      ...user
+      ...user,
     };
 
     return apiResponse(res, {

@@ -62,6 +62,7 @@ export const createDbSchema = async () => {
             option_1 TEXT NOT NULL,
             option_2 TEXT NOT NULL,
             option_3 TEXT NOT NULL,
+            option_4 TEXT NOT NULL,
             correct_option INT NOT NULL,
             points INT NOT NULL,
             status ENUM('1', '2') NOT NULL DEFAULT '1',

@@ -1,7 +1,9 @@
-import QRCode from 'qrcode';
-import crypto from 'crypto';
-import { apiResponse } from '../utils/helper.js';
+import QRCode from "qrcode";
+import crypto from "crypto";
+import { apiResponse } from "../utils/helper.js";
+import { db } from "../utils/db.js";
 
+// Generate unique QR code for Gurudwara
 // Generate unique QR code for Gurudwara
 export async function generateGurudwaraQR(gurudwaraId) {
   try {
@@ -14,9 +16,9 @@ export async function generateGurudwaraQR(gurudwaraId) {
       .digest("hex")
       .substring(0, 16);
 
-    // QR code data structure
+    // QR code data structure - Fixed: changed 'type' to 'visit' to match scan function
     const qrData = {
-      type: "gurudwara_visit",
+      visit: "gurudwara_visit", // Fixed: changed from 'type' to 'visit' and fixed typo
       id: gurudwaraId,
       code: qrHash,
       timestamp: timestamp,
@@ -41,6 +43,7 @@ export async function generateGurudwaraQR(gurudwaraId) {
     return {
       qrCodeImage: qrCodeDataURL,
       qrCodeData: qrHash,
+      qrData: JSON.stringify(qrData), // Add raw QR data for testing
       gurudwaraId: gurudwaraId,
     };
   } catch (error) {
@@ -105,4 +108,3 @@ export async function generateGurudwaraQR(gurudwaraId) {
 //     });
 //   }
 // });
-

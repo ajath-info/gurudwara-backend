@@ -33,10 +33,9 @@ apiRouter.post(
 );
 
 apiRouter.post("/scanQr", multerMiddleware, verifyToken, MOBILEAPI.scanQrCode);
-apiRouter.post(
+apiRouter.get(
   "/gurudwara/:id/generateQr",
-  multerMiddleware,
-  verifyToken,
+  
   MOBILEAPI.generateQR
 );
 apiRouter.post(
