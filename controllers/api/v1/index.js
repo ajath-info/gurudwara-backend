@@ -1104,8 +1104,8 @@ export const scanQrCode = async (req, res, next) => {
     // Check if user already scanned the qr today
     const todayDate = new Date().toISOString().split("T")[0];
     const checkLog = await db.query(
-      `SELECT * FROM points_earned 
-       WHERE user_id = ? AND gurudwara_id = ? AND reward_type = 'qr_scanned' 
+      `SELECT * FROM attendance_logs
+       WHERE user_id = ? AND gurudwara_id = ? AND visit_data = ?' 
        AND DATE(created_at) = ?`,
       [userId, gurudwaraId, todayDate]
     );
