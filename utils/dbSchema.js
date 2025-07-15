@@ -152,7 +152,7 @@ export const createDbSchema = async () => {
           is_first_visit_today BOOLEAN DEFAULT true,
           latitude DECIMAL(10,8) NOT NULL,
           longitude DECIMAL(11,8) NOT NULL,
-          device_info JSON,
+          -- device_info JSON,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
 

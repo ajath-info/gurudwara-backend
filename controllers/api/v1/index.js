@@ -493,15 +493,32 @@ export const addFavouriteGurudwara = async (req, res, next) => {
 
     // Check if user already has this gurudwara in favourites
     const [row] = await db.query(
-      `SELECT * FROM favourite_gurudwaras WHERE gurudwara_id = ? AND user_id = ? AND status = '1'`,
+      `SELECT * FROM favourite_gurudwaras WHERE gurudwara_id = ? AND user_id = ?`,
       [gurudwaraId, userId]
     );
-    if (row.length !== 0) {
+    if (row.length !== 0 && row[0].status === "1") {
+      await db.query(
+        `UPDATE favourite_gurudwaras SET status = '2' WHERE id = ?`,
+        [row[0].id]
+      );
       return apiResponse(res, {
-        error: true,
-        code: 400,
-        status: 0,
-        message: "User has already added this gurudwara to favourites",
+        error: false,
+        code: 200,
+        status: 1,
+        message: "Gurudwara removed from the favourites",
+      });
+    }
+
+    if (row.length !== 0 && row[0].status === "2") {
+      await db.query(
+        `UPDATE favourite_gurudwaras SET status = '1' WHERE id = ?`,
+        [row[0].id]
+      );
+      return apiResponse(res, {
+        error: false,
+        code: 200,
+        status: 1,
+        message: "Gurudwara added to the favourites succesfully",
       });
     }
 
@@ -1105,21 +1122,21 @@ export const scanQrCode = async (req, res, next) => {
     // Get points from gurudwara configuration
     const pointsToAward = gurudwara[0].qr_scan_points || 10;
 
-    // Collect device info
-    const deviceInfo = {
-      userAgent: req.headers["user-agent"] || "unknown",
-      ip: req.ip || req.connection.remoteAddress || "unknown",
-      platform: req.headers["x-platform"] || "unknown",
-      appVersion: req.headers["x-app-version"] || "unknown",
-      timestamp: new Date().toISOString(),
-    };
+    // // Collect device info
+    // const deviceInfo = {
+    //   userAgent: req.headers["user-agent"] || "unknown",
+    //   ip: req.ip || req.connection.remoteAddress || "unknown",
+    //   platform: req.headers["x-platform"] || "unknown",
+    //   appVersion: req.headers["x-app-version"] || "unknown",
+    //   timestamp: new Date().toISOString(),
+    // };
 
     // Insert attendance record
     await db.query(
       `INSERT INTO attendance_logs 
        (user_id, gurudwara_id, visit_date, visit_time, points_awarded, device_info) 
        VALUES (?, ?, CURDATE(), CURTIME(), ?, ?)`,
-      [userId, gurudwaraId, pointsToAward, JSON.stringify(deviceInfo)]
+      [userId, gurudwaraId, pointsToAward]
     );
 
     // Insert points record
