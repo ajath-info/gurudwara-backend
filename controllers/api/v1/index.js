@@ -1105,7 +1105,7 @@ export const scanQrCode = async (req, res, next) => {
     const todayDate = new Date().toISOString().split("T")[0];
     const checkLog = await db.query(
       `SELECT * FROM attendance_logs
-       WHERE user_id = ? AND gurudwara_id = ? AND visit_data = ?' 
+       WHERE user_id = ? AND gurudwara_id = ? AND visit_date = ? 
        AND DATE(created_at) = ?`,
       [userId, gurudwaraId, todayDate]
     );
