@@ -658,7 +658,7 @@ export const getGurudwaraDetails = async (req, res, next) => {
       code: 200,
       status: 1,
       message: "Gurudwara details fetched succesfully",
-      palyoad: response,
+      payload: response,
     });
   } catch (err) {
     next(err);

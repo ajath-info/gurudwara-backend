@@ -67,5 +67,5 @@ apiRouter.post(
   MOBILEAPI.editProfile
 );
 
-apiRouter.get("/logout", verifyAdminToken, MOBILEAPI.logout);
+apiRouter.get("/logout", verifyToken, MOBILEAPI.logout);
 export default apiRouter;
