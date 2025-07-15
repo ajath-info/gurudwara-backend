@@ -1,115 +1,108 @@
-<aside class="w-64 bg-white shadow-lg h-screen fixed left-0 top-0 z-30">
-  <div class="p-6 border-b border-gray-200">
-    <div class="flex items-center space-x-3">
-      <i class="fas fa-mosque text-2xl text-blue-600"></i>
-      <div>
-        <h1 class="text-xl font-bold text-gray-900">GurudwaraAdmin</h1>
-        <p class="text-sm text-gray-500 capitalize">
-          <%= admin.role.replace('_', ' ') %>
-        </p>
-      </div>
+<aside id="sidebar" class="flex flex-col bg-white max-w-[300px] w-full h-full border-r border-gray-200">
+  <!-- Fixed Header Section -->
+  <header
+    class="sticky top-0 z-20 h-[64.7px] px-4 flex gap-3 items-center font-bold text-xl bg-white border-b border-gray-200 shadow-sm">
+    <img src="/images/logo.png" alt="Hihlo Logo" class="rounded-full w-9 h-9" />
+    <div>
+      <span>Hihlo Admin</span>
+      <p class="text-sm text-gray-500 font-normal capitalize">
+        <%= admin.role.replace('_', ' ') %>
+      </p>
     </div>
-  </div>
+  </header>
 
-  <nav class="mt-6">
-    <div class="px-3">
-      <!-- Dashboard -->
-      <a
-        href="/admin"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path === '/admin' ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-home w-5"></i>
+  <!-- Scrollable Menu Section -->
+  <div class="flex-1 overflow-y-auto py-2">
+    <nav class="flex flex-col" id="main-nav">
+      <!-- Dashboard Link -->
+      <a href="/admin/"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path === '/admin' ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-home w-5 h-5"></i>
         <span class="font-medium">Dashboard</span>
       </a>
 
       <!-- Users -->
-      <a
-        href="/admin/users"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/users') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-users w-5"></i>
+      <a href="/admin/users"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/users') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-users w-5 h-5"></i>
         <span class="font-medium">Users</span>
       </a>
 
       <!-- Gurudwaras (Super Admin Only) -->
       <% if (admin.role === 'super_admin') { %>
-      <a
-        href="/admin/gurudwaras"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/gurudwaras') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-map-marker-alt w-5"></i>
+      <a href="/admin/gurudwaras"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/gurudwaras') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-map-marker-alt w-5 h-5"></i>
         <span class="font-medium">Gurudwaras</span>
       </a>
       <% } %>
 
       <!-- Rewards -->
-      <a
-        href="/admin/rewards"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/rewards') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-gift w-5"></i>
-        <span class="font-medium"
-          ><%= admin.role === 'local_admin' ? 'My Rewards' : 'Rewards' %></span
-        >
+      <a href="/admin/rewards"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/rewards') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-gift w-5 h-5"></i>
+        <span class="font-medium"><%= admin.role === 'local_admin' ? 'My Rewards' : 'Rewards' %></span>
       </a>
 
       <!-- Redemptions -->
-      <a
-        href="/admin/redemptions"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/redemptions') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-credit-card w-5"></i>
+      <a href="/admin/redemptions"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/redemptions') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-credit-card w-5 h-5"></i>
         <span class="font-medium">Redemptions</span>
       </a>
 
       <!-- Quizzes (Super Admin Only) -->
       <% if (admin.role === 'super_admin') { %>
-      <a
-        href="/admin/quizzes"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/quizzes') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-question-circle w-5"></i>
+      <a href="/admin/quizzes"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/quizzes') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-question-circle w-5 h-5"></i>
         <span class="font-medium">Quizzes</span>
       </a>
       <% } %>
 
       <!-- Attendance -->
-      <a
-        href="/admin/attendance"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/attendance') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-calendar-check w-5"></i>
+      <a href="/admin/attendance"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/attendance') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-calendar-check w-5 h-5"></i>
         <span class="font-medium">Attendance</span>
       </a>
 
       <!-- Analytics -->
-      <a
-        href="/admin/analytics"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/analytics') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-chart-bar w-5"></i>
+      <a href="/admin/analytics"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/analytics') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-chart-bar w-5 h-5"></i>
         <span class="font-medium">Analytics</span>
       </a>
 
       <!-- Content (Super Admin Only) -->
       <% if (admin.role === 'super_admin') { %>
-      <a
-        href="/admin/content"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/content') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-file-text w-5"></i>
+      <a href="/admin/content"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/content') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-file-text w-5 h-5"></i>
         <span class="font-medium">Content</span>
       </a>
       <% } %>
 
       <!-- Settings -->
-      <a
-        href="/admin/settings"
-        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 mb-1 <%= req.path.startsWith('/admin/settings') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-cog w-5"></i>
+      <a href="/admin/settings"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/settings') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>">
+        <i class="fas fa-cog w-5 h-5"></i>
         <span class="font-medium">Settings</span>
       </a>
-    </div>
-  </nav>
+    </nav>
+  </div>
+
+  <!-- Fixed Footer Section -->
+  <footer class="sticky bottom-0 left-0 w-full bg-white border-t border-gray-200 z-10 p-2">
+    <button id="logout-btn"
+      class="cursor-pointer flex items-center gap-3 w-full rounded p-2 hover:bg-gray-100 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+      <span class="font-medium">Logout</span>
+    </button>
+  </footer>
 </aside>

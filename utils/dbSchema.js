@@ -162,6 +162,7 @@ export const createDbSchema = async () => {
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('super_admin', 'local_admin') NOT NULL DEFAULT 'local_admin',
+    gurudwara_id INT NULL,
     status ENUM('1', '2') NOT NULL DEFAULT '1',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

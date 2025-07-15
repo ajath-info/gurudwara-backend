@@ -11,7 +11,6 @@ import { apiResponseError } from "./middleware/error.js";
 import ADMIN_ROUTER from "./routes/admin/v1/index.js";
 import apiRouter from "./routes/api/v1/index.js";
 import { toastMiddleware } from "./middleware/toast.js";
-import cors from "cors";
 
 import expressLayouts from "express-ejs-layouts";
 
@@ -50,14 +49,6 @@ const limiter = rateLimit({
   },
 });
 app.use(limiter);
-
-// Add this before your routes
-app.use(
-  cors({
-    origin: "*", // For development only
-    credentials: true,
-  })
-);
 
 app.use("/api/v1", apiRouter);
 app.use("/admin", ADMIN_ROUTER);

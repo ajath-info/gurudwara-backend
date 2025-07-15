@@ -1,0 +1,368 @@
+<!-- Dashboard Content -->
+<div class="space-y-6 p-6">
+  <!-- Header Section -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+      <p class="text-gray-600 mt-1">Welcome back, <%= admin.username %>!</p>
+    </div>
+    <div class="text-right">
+      <p class="text-sm text-gray-500">Last updated</p>
+      <p class="text-sm font-medium text-gray-900">
+        <%= new Date().toLocaleString() %>
+      </p>
+    </div>
+  </div>
+
+  <!-- Stats Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <% if (admin.role === 'super_admin') { %>
+    <!-- Super Admin Stats -->
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Users</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.totalUsers.toLocaleString() %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +12% from last month
+          </p>
+        </div>
+        <div class="bg-blue-500 p-3 rounded-full">
+          <i class="fas fa-users text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Gurudwaras</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.totalGurudwaras %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +8% from last month
+          </p>
+        </div>
+        <div class="bg-green-500 p-3 rounded-full">
+          <i class="fas fa-map-marker-alt text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Rewards</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.totalRewards %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +15% from last month
+          </p>
+        </div>
+        <div class="bg-purple-500 p-3 rounded-full">
+          <i class="fas fa-gift text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Quizzes</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.totalQuizzes %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +5% from last month
+          </p>
+        </div>
+        <div class="bg-orange-500 p-3 rounded-full">
+          <i class="fas fa-question-circle text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Points Earned</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.totalPointsEarned.toLocaleString() %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +22% from last month
+          </p>
+        </div>
+        <div class="bg-pink-500 p-3 rounded-full">
+          <i class="fas fa-chart-line text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Rewards Redeemed</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.totalRewardsRedeemed %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +18% from last month
+          </p>
+        </div>
+        <div class="bg-indigo-500 p-3 rounded-full">
+          <i class="fas fa-dollar-sign text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Active Users</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.activeUsers.toLocaleString() %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +7% from last month
+          </p>
+        </div>
+        <div class="bg-teal-500 p-3 rounded-full">
+          <i class="fas fa-user-check text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">New Users Today</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.newUsersToday %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +3 from yesterday
+          </p>
+        </div>
+        <div class="bg-yellow-500 p-3 rounded-full">
+          <i class="fas fa-clock text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+    <% } else { %>
+    <!-- Local Admin Stats -->
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">My Gurudwara Users</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.myGurudwaraUsers %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +8% from last month
+          </p>
+        </div>
+        <div class="bg-blue-500 p-3 rounded-full">
+          <i class="fas fa-users text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">My Rewards</p>
+          <p class="text-2xl font-bold text-gray-900"><%= stats.myRewards %></p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +2 this month
+          </p>
+        </div>
+        <div class="bg-purple-500 p-3 rounded-full">
+          <i class="fas fa-gift text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Points Earned</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.pointsEarned.toLocaleString() %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +15% from last month
+          </p>
+        </div>
+        <div class="bg-pink-500 p-3 rounded-full">
+          <i class="fas fa-chart-line text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Rewards Redeemed</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= stats.rewardsRedeemed %>
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +12% from last month
+          </p>
+        </div>
+        <div class="bg-indigo-500 p-3 rounded-full">
+          <i class="fas fa-dollar-sign text-white text-xl"></i>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- Bottom Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+      <div class="space-y-3">
+        <% if (recentActivity && recentActivity.length > 0) { %> <%
+        recentActivity.forEach(activity => { %>
+        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+          <div class="flex-shrink-0">
+            <i
+              class="fas fa-<%= activity.icon %> text-<%= activity.color %>-500"
+            ></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">
+              <%= activity.title %>
+            </p>
+            <p class="text-xs text-gray-500"><%= activity.time %></p>
+          </div>
+        </div>
+        <% }); %> <% } else { %>
+        <div class="text-center py-8">
+          <i class="fas fa-clock text-gray-400 text-2xl mb-2"></i>
+          <p class="text-gray-500">No recent activity</p>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <button
+          onclick="window.location.href='/admin/users/add'"
+          class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-center"
+        >
+          <i class="fas fa-users text-blue-600 text-2xl mb-2 icon-bounce"></i>
+          <span class="block text-sm font-medium text-blue-900">Add User</span>
+        </button>
+
+        <% if (admin.role === 'super_admin') { %>
+        <button
+          onclick="window.location.href='/admin/gurudwaras/add'"
+          class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors duration-200 text-center"
+        >
+          <i
+            class="fas fa-map-marker-alt text-green-600 text-2xl mb-2 icon-bounce"
+          ></i>
+          <span class="block text-sm font-medium text-green-900"
+            >Add Gurudwara</span
+          >
+        </button>
+        <% } %>
+
+        <button
+          onclick="window.location.href='/admin/rewards/add'"
+          class="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors duration-200 text-center"
+        >
+          <i class="fas fa-gift text-purple-600 text-2xl mb-2 icon-bounce"></i>
+          <span class="block text-sm font-medium text-purple-900"
+            >Add Reward</span
+          >
+        </button>
+
+        <button
+          onclick="window.location.href='/admin/quizzes/add'"
+          class="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-200 text-center"
+        >
+          <i
+            class="fas fa-question-circle text-orange-600 text-2xl mb-2 icon-bounce"
+          ></i>
+          <span class="block text-sm font-medium text-orange-900"
+            >Add Quiz</span
+          >
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Add some interactivity
+  document.addEventListener("DOMContentLoaded", function () {
+    // Add click effect to cards
+    const cards = document.querySelectorAll(".card-hover");
+    cards.forEach((card) => {
+      card.addEventListener("click", function () {
+        this.style.transform = "scale(0.98)";
+        setTimeout(() => {
+          this.style.transform = "translateY(-4px)";
+        }, 100);
+      });
+    });
+
+    // Update last updated time every minute
+    setInterval(function () {
+      const timeElement = document.querySelector(
+        ".text-right .text-sm.font-medium"
+      );
+      if (timeElement) {
+        timeElement.textContent = new Date().toLocaleString();
+      }
+    }, 60000);
+  });
+</script>

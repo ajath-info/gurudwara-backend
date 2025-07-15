@@ -1,46 +1,64 @@
-<header class="bg-white shadow-sm border-b border-gray-200 h-16 fixed top-0 right-0 left-64 z-20">
-    <div class="h-full px-6 flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-            <div class="relative">
-                <i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80"
-                />
-            </div>
-        </div>
-
-        <div class="flex items-center space-x-4">
-            <button class="p-2 text-gray-400 hover:text-gray-600 relative">
-                <i class="fas fa-bell text-lg"></i>
-                <span class="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-            </button>
-
-            <div class="flex items-center space-x-3">
-                <div class="text-right">
-                    <p class="text-sm font-medium text-gray-900"><%= admin.name %></p>
-                    <p class="text-xs text-gray-500 capitalize"><%= admin.role.replace('_', ' ') %></p>
-                </div>
-                <div class="relative">
-                    <img
-                        src="<%= admin.avatar %>"
-                        alt="<%= admin.name %>"
-                        class="h-8 w-8 rounded-full"
-                    />
-                </div>
-            </div>
-
-            <form action="/admin/logout" method="POST" class="inline">
-                <button
-                    type="submit"
-                    class="p-2 text-gray-400 hover:text-red-600 transition-colors duration-200"
-                    title="Logout"
-                    onclick="return confirm('Are you sure you want to logout?')"
-                >
-                    <i class="fas fa-sign-out-alt text-lg"></i>
-                </button>
-            </form>
-        </div>
+<header class="sticky top-0 z-10 h-16 px-2 flex items-center shadow bg-white">
+  <div id="header-content" class="flex justify-between w-full items-center">
+    <div class="flex items-center gap-3">
+      <button
+        id="hide-menu"
+        class="bg-transparent shadow-none text-black hover:bg-gray-200 rounded hover:cursor-pointer p-2 transition-opacity duration-200 ease-in-out"
+      >
+        <i
+          class="fa-solid fa-arrow-left w-5 h-5 transform transition-transform duration-200 ease-in-out hover:-translate-x-0.5"
+        ></i>
+      </button>
+      <button
+        id="show-menu"
+        class="hidden bg-transparent shadow-none text-black hover:bg-gray-200 rounded hover:cursor-pointer p-2 transition-opacity duration-200 ease-in-out"
+      >
+        <i
+          class="fa-solid fa-bars w-5 h-5 transform transition-transform duration-200 ease-in-out hover:translate-x-0.5"
+        ></i>
+      </button>
     </div>
+
+    <div class="flex items-center gap-3">
+      <div
+        class="bg-transparent shadow-none text-black hover:bg-gray-200 rounded hover:cursor-pointer py-1.5 px-2"
+      >
+        <span class="font-semibold">Welcome / Admin</span>
+      </div>
+
+      <!-- Profile dropdown -->
+      <div class="relative">
+        <div
+          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 cursor-pointer"
+          id="profile-icon"
+        >
+          <i class="fas fa-user"></i>
+        </div>
+        <div
+          id="profile-menu"
+          class="mt-1 absolute top-full right-0 bg-white border border-gray-200 rounded shadow-md w-48 z-50 hidden transition-all duration-200 ease-in-out transform -translate-y-1 opacity-0"
+        >
+          <a
+            href="/admin/profile"
+            class="flex items-center gap-3 p-2 hover:bg-gray-100"
+          >
+            <div class="">
+              <i class="fas fa-user-circle"></i>
+            </div>
+            <span>Profile</span>
+          </a>
+          <div class="border-t border-gray-200"></div>
+          <button
+            id="profile-logout-btn"
+            class="flex items-center gap-3 p-2 hover:bg-gray-100 w-full text-left cursor-pointer"
+          >
+            <div>
+              <i class="fas fa-sign-out-alt"></i>
+            </div>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </header>

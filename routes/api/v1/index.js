@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyToken } from "../../../middleware/auth.js";
+import { verifyAdminToken, verifyToken } from "../../../middleware/auth.js";
 import { multerMiddleware } from "../../../middleware/multer.js";
 import { sendOtp } from "../../../controllers/api/v1/index.js";
 import { verifyOtp } from "../../../controllers/api/v1/index.js";
@@ -35,7 +35,7 @@ apiRouter.post(
 apiRouter.post("/scanQr", multerMiddleware, verifyToken, MOBILEAPI.scanQrCode);
 apiRouter.get(
   "/gurudwara/:id/generateQr",
-  
+
   MOBILEAPI.generateQR
 );
 apiRouter.post(
@@ -66,4 +66,6 @@ apiRouter.post(
   verifyToken,
   MOBILEAPI.editProfile
 );
+
+apiRouter.get("/logout", verifyAdminToken, MOBILEAPI.logout);
 export default apiRouter;

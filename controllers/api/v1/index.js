@@ -644,20 +644,12 @@ export const getGurudwaraDetails = async (req, res, next) => {
       `SELECT id, title, description, points, image_urls FROM rewards WHERE gurudwara_id = ? AND status = '1' ORDER BY created_at DESC`,
       [gurudwaraId]
     );
-    if (rewardsRows.length === 0) {
-      return apiResponse(res, {
-        error: false,
-        code: 404,
-        status: 0,
-        message: "No rewards found for this gurudwara",
-      });
-    }
 
     const response = {
       gurudwaraDetails: {
         ...row[0],
         created_at: formatDateTime(row[0].created_at),
-        rewards: rewardsRows,
+        rewards: rewardsRows || [],
       },
     };
 
@@ -806,7 +798,7 @@ export const getQuizzes = async (req, res, next) => {
       points: quiz.points,
     }));
     const response = {
-      quizzes: quizzes
+      quizzes: quizzes,
     };
 
     return apiResponse(res, {
