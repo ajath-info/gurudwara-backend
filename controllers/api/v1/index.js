@@ -662,11 +662,40 @@ export const getGurudwaraDetails = async (req, res, next) => {
       [gurudwaraId]
     );
 
+    const gurudwaraDetail = row.map((r) => {
+      return {
+        id: r.id,
+        name: r.name,
+        address: r.address,
+        image_urls:
+          typeof r.image_urls === "string"
+            ? JSON.parse(r.image_urls)
+            : r.image_urls,
+        latitude: r.longitude,
+        longitude: r.latitude,
+        qr_code_url: r.qr_code_url,
+        status: r.status,
+        created_at: r.created_at,
+      };
+    });
+
+    const rewards = rewardsRows.map((r) => {
+      return {
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        points: r.points,
+        image_urls:
+          typeof r.image_urls === "string"
+            ? JSON.parse(r.image_urls)
+            : r.image_urls,
+      };
+    });
     const response = {
       gurudwaraDetails: {
-        ...row[0],
+        ...gurudwaraDetail,
         created_at: formatDateTime(row[0].created_at),
-        rewards: rewardsRows || [],
+        rewards: rewards || [],
       },
     };
 
@@ -1571,3 +1600,5 @@ export const getPrivacyPolicy = async (req, res, next) => {
     next(err);
   }
 };
+
+
