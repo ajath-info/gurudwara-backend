@@ -1622,9 +1622,13 @@ export const getPointsHistory = async (req, res) => {
       FROM points_earned 
       WHERE user_id = ?
     `;
-
+    const [deductedPoints] = await db.query(
+      `SELECT SUM(points) as deducted_points FROM rewards_redeemed WHERE user_id = ?`,
+      [userId]
+    );
+    const pointsDeducted = deductedPoints[0].deducted_points;
     const [totalResult] = await db.query(totalPointsQuery, [userId]);
-    const totalPoints = totalResult[0].total_points;
+    const totalPoints = totalResult[0].total_points - pointsDeducted;
 
     // Get points history grouped by gurudwara
     const historyQuery = `
@@ -1719,6 +1723,97 @@ export const getVisitHistory = async (req, res, next) => {
       code: 200,
       status: 1,
       message: "Visit History fetched succesfully",
+      payload: response,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ *
+ */
+export const reedeemRewards = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return apiResponse(res, {
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User not authenticated",
+      });
+    }
+
+    const { rewardId } = req.body;
+    if (!rewardId) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Reward id is missing",
+      });
+    }
+
+    // Check is the reward exists with this id
+    const [checkReward] = await db.query(
+      `SELECT * FROM rewards WHERE id = ? AND status = '1'`,
+      [rewardId]
+    );
+    if (checkReward.length === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 404,
+        status: 0,
+        message: "Reward not found",
+      });
+    }
+
+    // Check if user has already redeemed this reward
+    const [checkRedeemed] = await db.query(
+      `SELECT * FROM rewards_redeemed WHERE user_id = ? AND reward_id = ?`,
+      [userId, rewardId]
+    );
+    if (checkRedeemed.length > 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "You have already redeemed this reward",
+      });
+    }
+
+    // Check if user has enough points to reedem this reward
+    const [checkUserPoints] = await db.query(
+      `SELECT SUM(points) as total_points FROM points_earned WHERE user_id = ?`,
+      [userId]
+    );
+
+    const totalPoints = checkUserPoints[0].total_points;
+    if (totalPoints < checkReward[0].points_required) {
+      return apiResponse(res, {
+        error: true,
+        code: 404,
+        status: 0,
+        message: "You don't have enough points to redeem this reward",
+      });
+    }
+
+    // Redeem the reward
+    await db.query(
+      `INSERT INTO rewards_reedemed (user_id, reward_id, points) VALUES (?,?,?)`,
+      [userId, rewardId, checkReward[0].points]
+    );
+    const response = {
+      user_id: userId,
+      reward_id: rewardId,
+      points_deducted: checkReward[0].points,
+    };
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: "You have succesfully redeemed the reward",
       payload: response,
     });
   } catch (err) {
