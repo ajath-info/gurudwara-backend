@@ -1119,7 +1119,7 @@ export const scanQrCode = async (req, res, next) => {
     const gurudwaraId = parsedQrData.id;
 
     // Check if the gurudwara exists and get its points configuration
-    const gurudwara = await db.query(
+    const [gurudwara] = await db.query(
       `SELECT * FROM gurudwaras WHERE id = ? AND status = '1'`,
       [gurudwaraId]
     );
@@ -1132,6 +1132,7 @@ export const scanQrCode = async (req, res, next) => {
         message: "No gurudwara found",
       });
     }
+    
 
     // Check if user already scanned the qr today
     const todayDate = new Date().toISOString().split("T")[0];
@@ -1180,10 +1181,16 @@ export const scanQrCode = async (req, res, next) => {
     );
 
     // Get user's total points
-    const totalPointsResult = await db.query(
+    const [totalPointsResult] = await db.query(
       "SELECT SUM(points) as total_points FROM points_earned WHERE user_id = ?",
       [userId]
     );
+
+    if(totalPointsResult.length === 0) {
+      res.status(404).json('No points earned yet');
+    }
+
+    console.log(totalPointsResult[0].total_points);
 
     const totalPoints = totalPointsResult[0].total_points || 0;
 
