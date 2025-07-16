@@ -1608,9 +1608,11 @@ export const getPointsHistory = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "User ID is required",
+      return apiResponse(res, {
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User not authenticated",
       });
     }
 
@@ -1649,20 +1651,77 @@ export const getPointsHistory = async (req, res) => {
       points: item.total_points,
     }));
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        total_points: totalPoints,
-        history: formattedHistory,
-      },
+    const response = {
+      total_points: totalPoints,
+      history: formattedHistory,
+    };
+
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
       message: "Points history retrieved successfully",
+      payload: response,
     });
   } catch (error) {
-    console.error("Error in getPointsHistory:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
+    next(err);
+  }
+};
+
+export const getVisitHistory = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return apiResponse(res, {
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User not authenticated",
+      });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const [attendanceLogs] = await db.query(
+      `SELECT * FROM attendance_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [userId, limit, offset]
+    );
+
+    if (attendanceLogs.length === 0) {
+      return apiResponse(res, {
+        error: false,
+        code: 404,
+        status: 1,
+        message: "User has no visit history",
+      });
+    }
+
+    const formattedVisitHistory = attendanceLogs.map((aL) => ({
+      id: aL.id,
+      gurudwara_id: aL.gurudwara_id,
+      user_id: aL.user_id,
+      visit_date: aL.visit_date,
+      visit_time: aL.visit_time,
+      points_earned: aL.points_earned,
+      isFirstTimeVisit: aL.isFirstTime,
+    }));
+
+    const response = {
+      visith_history: formattedVisitHistory,
+      total_pages: Math.ceil(attendanceLogs.length / limit),
+      current_page: page,
+      limit: limit,
+    };
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: "Visit History fetched succesfully",
+      payload: response,
     });
+  } catch (err) {
+    next(err);
   }
 };

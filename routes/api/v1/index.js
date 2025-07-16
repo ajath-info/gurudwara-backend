@@ -69,5 +69,8 @@ apiRouter.post(
 
 // Points History
 apiRouter.get("/pointsHistory", verifyToken, MOBILEAPI.getPointsHistory);
+
+// Visit History
+apiRouter.get("/visitHistory", verifyToken, MOBILEAPI.getVisitHistory);
 apiRouter.get("/logout", verifyToken, MOBILEAPI.logout);
 export default apiRouter;
