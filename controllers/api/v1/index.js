@@ -1601,4 +1601,68 @@ export const getPrivacyPolicy = async (req, res, next) => {
   }
 };
 
+/**
+ *
+ */
+export const getPointsHistory = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
 
+    // Get total points for the user
+    const totalPointsQuery = `
+      SELECT COALESCE(SUM(points), 0) as total_points 
+      FROM points_earned 
+      WHERE user_id = ?
+    `;
+
+    const [totalResult] = await db.query(totalPointsQuery, [userId]);
+    const totalPoints = totalResult[0].total_points;
+
+    // Get points history grouped by gurudwara
+    const historyQuery = `
+      SELECT 
+        g.id as gurudwara_id,
+        g.name as gurudwara_name,
+        g.image_urls,
+        COALESCE(SUM(pe.points), 0) as total_points
+      FROM gurudwaras g
+      LEFT JOIN points_earned pe ON g.id = pe.gurudwara_id AND pe.user_id = ?
+      WHERE pe.gurudwara_id IS NOT NULL
+      GROUP BY g.id, g.name, g.image_urls
+      HAVING total_points > 0
+      ORDER BY total_points DESC
+    `;
+
+    const [historyResult] = await db.query(historyQuery, [userId]);
+
+    // Format the response to match the screen structure
+    const formattedHistory = historyResult.map((item) => ({
+      gurudwara_id: item.gurudwara_id,
+      gurudwara_name: item.gurudwara_name,
+      image_urls: JSON.parse(item.image_urls || "[]"),
+      points: item.total_points,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        total_points: totalPoints,
+        history: formattedHistory,
+      },
+      message: "Points history retrieved successfully",
+    });
+  } catch (error) {
+    console.error("Error in getPointsHistory:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
