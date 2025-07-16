@@ -1132,7 +1132,6 @@ export const scanQrCode = async (req, res, next) => {
         message: "No gurudwara found",
       });
     }
-    
 
     // Check if user already scanned the qr today
     const todayDate = new Date().toISOString().split("T")[0];
@@ -1186,8 +1185,8 @@ export const scanQrCode = async (req, res, next) => {
       [userId]
     );
 
-    if(totalPointsResult.length === 0) {
-      res.status(404).json('No points earned yet');
+    if (totalPointsResult.length === 0) {
+      res.status(404).json("No points earned yet");
     }
 
     console.log(totalPointsResult[0].total_points);
@@ -1698,10 +1697,30 @@ export const getVisitHistory = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
+    // First, let's get attendance logs with a simpler query to avoid JOIN issues
     const [attendanceLogs] = await db.query(
-      `SELECT * FROM attendance_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      `SELECT 
+        id,
+        user_id,
+        gurudwara_id,
+        visit_date,
+        visit_time,
+        points_awarded,
+        is_first_visit_today,
+        created_at
+      FROM attendance_logs 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC 
+      LIMIT ? OFFSET ?`,
       [userId, limit, offset]
     );
+
+    // Get total count for pagination
+    const [totalCountResult] = await db.query(
+      `SELECT COUNT(*) as total FROM attendance_logs WHERE user_id = ?`,
+      [userId]
+    );
+    const totalCount = totalCountResult[0].total;
 
     if (attendanceLogs.length === 0) {
       return apiResponse(res, {
@@ -1712,27 +1731,61 @@ export const getVisitHistory = async (req, res, next) => {
       });
     }
 
+    // Get gurudwara details for each attendance log
+    const gurudwaraIds = [
+      ...new Set(attendanceLogs.map((log) => log.gurudwara_id)),
+    ];
+    let gurudwaraMap = {};
+
+    if (gurudwaraIds.length > 0) {
+      try {
+        const [gurudwaras] = await db.query(
+          `SELECT id, name, image_urls FROM gurudwaras WHERE id IN (${gurudwaraIds
+            .map(() => "?")
+            .join(",")})`,
+          gurudwaraIds
+        );
+        gurudwaraMap = gurudwaras.reduce((acc, g) => {
+          acc[g.id] = g;
+          return acc;
+        }, {});
+      } catch (gurudwaraError) {
+        console.log("Error fetching gurudwara details:", gurudwaraError);
+        // Continue without gurudwara details if table doesn't exist
+      }
+    }
+
+    // Format the response to match Figma design
     const formattedVisitHistory = attendanceLogs.map((aL) => ({
       id: aL.id,
       gurudwara_id: aL.gurudwara_id,
+      gurudwara_name:
+        gurudwaraMap[aL.gurudwara_id]?.name || `Gurudwara ${aL.gurudwara_id}`,
+      gurudwara_image:
+        typeof gurudwaraMap[aL.gurudwara_id]?.image_urls === "string"
+          ? JSON.parse(gurudwaraMap[aL.gurudwara_id]?.image_urls)
+          : gurudwaraMap[aL.gurudwara_id]?.image_urls,
       user_id: aL.user_id,
-      visit_date: aL.visit_date,
-      visit_time: aL.visit_time,
-      points_earned: aL.points_earned,
-      isFirstTimeVisit: aL.isFirstTime,
+      visit_date: formatDateTime(aL.visit_date), // Format: YYYY-MM-DD
+      visit_time: aL.visit_time, // Format: HH:MM:SS
+      points_earned: aL.points_awarded || 0,
+      isFirstTimeVisit:
+        aL.is_first_visit_today === 1 || aL.is_first_visit_today === true,
     }));
 
     const response = {
-      visith_history: formattedVisitHistory,
-      total_pages: Math.ceil(attendanceLogs.length / limit),
+      visit_history: formattedVisitHistory, // Fixed typo: was "visith_history"
+      total_pages: Math.ceil(totalCount / limit), // Use actual total count
       current_page: page,
       limit: limit,
+      total_records: totalCount,
     };
+
     return apiResponse(res, {
       error: false,
       code: 200,
       status: 1,
-      message: "Visit History fetched succesfully",
+      message: "Visit History fetched successfully", // Fixed typo: was "succesfully"
       payload: response,
     });
   } catch (err) {
