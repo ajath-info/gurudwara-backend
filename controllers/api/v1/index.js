@@ -1676,7 +1676,7 @@ export const getPointsHistory = async (req, res, next) => {
       message: "Points history retrieved successfully",
       payload: response,
     });
-  } catch (error) {
+  } catch (err) {
     next(err);
   }
 };
