@@ -1090,6 +1090,9 @@ export const scanQrCode = async (req, res, next) => {
 
     const { qrData } = req.body;
 
+    const userLat = req.body?.lat;
+    const userLng = req.body?.lng;
+
     let parsedQrData;
     try {
       parsedQrData = JSON.parse(qrData);
@@ -1132,13 +1135,13 @@ export const scanQrCode = async (req, res, next) => {
 
     // Check if user already scanned the qr today
     const todayDate = new Date().toISOString().split("T")[0];
-    const checkLog = await db.query(
+    const [checkLog] = await db.query(
       `SELECT * FROM attendance_logs
        WHERE user_id = ? AND gurudwara_id = ? AND visit_date = ? 
        AND DATE(created_at) = ?`,
-      [userId, gurudwaraId, todayDate]
+      [userId, gurudwaraId, todayDate, todayDate]
     );
-    console.log(checkLog);
+    console.log(checkLog[0]);
 
     if (checkLog.length !== 0) {
       return apiResponse(res, {
@@ -1164,9 +1167,9 @@ export const scanQrCode = async (req, res, next) => {
     // Insert attendance record
     await db.query(
       `INSERT INTO attendance_logs 
-       (user_id, gurudwara_id, visit_date, visit_time, points_awarded, device_info) 
-       VALUES (?, ?, CURDATE(), CURTIME(), ?, ?)`,
-      [userId, gurudwaraId, pointsToAward]
+       (user_id, gurudwara_id, visit_date, visit_time, points_awarded, latitude, longitude) 
+       VALUES (?, ?, CURDATE(), CURTIME(), ?, ?, ?)`,
+      [userId, gurudwaraId, pointsToAward, userLat, userLng]
     );
 
     // Insert points record
@@ -1733,7 +1736,7 @@ export const getVisitHistory = async (req, res, next) => {
 /**
  *
  */
-export const reedeemRewards = async (req, res, next) => {
+export const redeemRewards = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     if (!userId) {

@@ -32,7 +32,7 @@ apiRouter.post(
   MOBILEAPI.submitQuiz
 );
 
-apiRouter.post("/scanQr", multerMiddleware, verifyToken, MOBILEAPI.scanQrCode);
+apiRouter.post("/scanQr", verifyToken, multerMiddleware, MOBILEAPI.scanQrCode);
 apiRouter.get(
   "/gurudwara/:id/generateQr",
 
@@ -72,5 +72,13 @@ apiRouter.get("/pointsHistory", verifyToken, MOBILEAPI.getPointsHistory);
 
 // Visit History
 apiRouter.get("/visitHistory", verifyToken, MOBILEAPI.getVisitHistory);
+
+// Redeem Rewards
+apiRouter.post(
+  "/redeemRewards",
+  verifyToken,
+  multerMiddleware,
+  MOBILEAPI.redeemRewards
+);
 apiRouter.get("/logout", verifyToken, MOBILEAPI.logout);
 export default apiRouter;
