@@ -1613,7 +1613,7 @@ export const getPrivacyPolicy = async (req, res, next) => {
 /**
  *
  */
-export const getPointsHistory = async (req, res) => {
+export const getPointsHistory = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
