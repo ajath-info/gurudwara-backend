@@ -722,6 +722,9 @@ export const getGurudwaraDetails = async (req, res, next) => {
 /**
  * Get rewards redemption history with details
  */
+/**
+ * Get rewards redemption history with details
+ */
 export const getRewardsHistory = async (req, res, next) => {
   try {
     const userId = req.user?.id;
@@ -750,11 +753,16 @@ export const getRewardsHistory = async (req, res, next) => {
         r.image_urls as reward_images,
         r.points as reward_points,
         r.gurudwara_id,
+        g.name as gurudwara_name,
+        g.address as gurudwara_address,
+        g.latitude as gurudwara_latitude,
+        g.longitude as gurudwara_longitude,
         u.name as user_name,
         u.phone as user_phone
       FROM rewards_redeemed rr
       INNER JOIN rewards r ON rr.reward_id = r.id
       INNER JOIN users u ON rr.user_id = u.id
+      INNER JOIN gurudwaras g ON r.gurudwara_id = g.id
       WHERE rr.user_id = ? AND r.status = '1'
       ORDER BY rr.created_at DESC LIMIT ? OFFSET ?
     `,
@@ -780,9 +788,19 @@ export const getRewardsHistory = async (req, res, next) => {
         redeemed_rewards: {
           title: r.reward_title,
           description: r.reward_description,
-          image_urls: typeof r.reward_images === 'string' ? JSON.parse(r.reward__images) : r.reward_images,
+          image_urls:
+            typeof r.reward_images === "string"
+              ? JSON.parse(r.reward_images)
+              : r.reward_images,
           points: r.reward_points,
           gurudwara_id: r.gurudwara_id,
+        },
+        gurudwara_location: {
+          id: r.gurudwara_id,
+          name: r.gurudwara_name,
+          address: r.gurudwara_address,
+          latitude: r.gurudwara_latitude,
+          longitude: r.gurudwara_longitude,
         },
         userDetail: {
           id: r.user_id,
