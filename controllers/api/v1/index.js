@@ -1853,7 +1853,7 @@ export const redeemRewards = async (req, res, next) => {
     );
 
     const totalPoints = checkUserPoints[0].total_points;
-    if (totalPoints < checkReward[0].points_required) {
+    if (totalPoints < checkReward[0].points) {
       return apiResponse(res, {
         error: true,
         code: 404,
