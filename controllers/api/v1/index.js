@@ -657,6 +657,12 @@ export const getGurudwaraDetails = async (req, res, next) => {
       });
     }
 
+    // Check if this gurudwara is marked as favourite by the user
+    const [favouriteRow] = await db.query(
+      `SELECT status FROM favourite_gurudwaras WHERE user_id = ? AND gurudwara_id = ? AND status = '1'`,
+      [userId, gurudwaraId]
+    );
+
     const [rewardsRows] = await db.query(
       `SELECT id, title, description, points, image_urls FROM rewards WHERE gurudwara_id = ? AND status = '1' ORDER BY created_at DESC`,
       [gurudwaraId]
@@ -676,6 +682,7 @@ export const getGurudwaraDetails = async (req, res, next) => {
         qr_code_url: r.qr_code_url,
         status: r.status,
         created_at: r.created_at,
+        is_favourite: favouriteRow.length > 0 ? 1 : 0, // Add favourite status
       };
     });
 
@@ -691,9 +698,10 @@ export const getGurudwaraDetails = async (req, res, next) => {
             : r.image_urls,
       };
     });
+
     const response = {
       gurudwaraDetails: {
-        ...gurudwaraDetail,
+        ...gurudwaraDetail[0], // Since it's a single gurudwara, take the first element
         created_at: formatDateTime(row[0].created_at),
         rewards: rewards || [],
       },
@@ -703,7 +711,7 @@ export const getGurudwaraDetails = async (req, res, next) => {
       error: false,
       code: 200,
       status: 1,
-      message: "Gurudwara details fetched succesfully",
+      message: "Gurudwara details fetched successfully",
       payload: response,
     });
   } catch (err) {
@@ -772,7 +780,7 @@ export const getRewardsHistory = async (req, res, next) => {
         redeemed_rewards: {
           title: r.reward_title,
           description: r.reward_description,
-          image_urls: r.reward_images,
+          image_urls: typeof r.reward_images === 'string' ? JSON.parse(r.reward__images) : r.reward_images,
           points: r.reward_points,
           gurudwara_id: r.gurudwara_id,
         },
