@@ -1864,7 +1864,7 @@ export const redeemRewards = async (req, res, next) => {
 
     // Redeem the reward
     await db.query(
-      `INSERT INTO rewards_reedemed (user_id, reward_id, points) VALUES (?,?,?)`,
+      `INSERT INTO rewards_redemed (user_id, reward_id, points) VALUES (?,?,?)`,
       [userId, rewardId, checkReward[0].points]
     );
     const response = {
