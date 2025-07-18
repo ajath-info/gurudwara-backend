@@ -81,4 +81,30 @@ apiRouter.post(
   MOBILEAPI.redeemRewards
 );
 apiRouter.get("/logout", verifyToken, MOBILEAPI.logout);
+
+// WEBSITE ROUTER
+apiRouter.get("/aboutUs", (req, res) => {
+  res.render("aboutUs", {
+    title: "About Us",
+  });
+});
+
+apiRouter.get("/termsCondition", (req, res) => {
+  res.render("termsCondition",{
+    title : 'Terms and Conditions'
+  });
+});
+
+apiRouter.get("/privacyPolicy", (req, res) => {
+  res.render("privacyPolicy", {
+    title : 'Privacy Policy'
+  });
+});
+
+apiRouter.get("/contactUs", (req, res) => {
+  res.render("contactUs", {
+    title: "Contact Us",
+  });
+});
+
 export default apiRouter;
