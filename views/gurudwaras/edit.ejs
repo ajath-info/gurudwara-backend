@@ -1,0 +1,104 @@
+<div class="space-y-6 p-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Edit Gurudwara</h1>
+            <p class="text-gray-600">Update gurudwara details</p>
+        </div>
+        <a href="/admin/gurudwaras" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center space-x-2">
+            <i class="fas fa-arrow-left h-4 w-4"></i>
+            <span>Back to Gurudwaras</span>
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form action="/admin/gurudwaras/<%= gurudwara.id %>/edit" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    value="<%= gurudwara.name %>"
+                    class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                />
+            </div>
+
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                <textarea
+                    name="address"
+                    id="address"
+                    class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows="4"
+                    required
+                ><%= gurudwara.address %></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="latitude" class="block text-sm font-medium text-gray-700">Latitude</label>
+                    <input
+                        type="number"
+                        step="any"
+                        name="latitude"
+                        id="latitude"
+                        value="<%= gurudwara.latitude || '' %>"
+                        class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+                <div>
+                    <label for="longitude" class="block text-sm font-medium text-gray-700">Longitude</label>
+                    <input
+                        type="number"
+                        step="any"
+                        name="longitude"
+                        id="longitude"
+                        value="<%= gurudwara.longitude || '' %>"
+                        class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                    name="status"
+                    id="status"
+                    class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                    <option value="1" <%= gurudwara.status === '1' ? 'selected' : '' %>>Active</option>
+                    <option value="2" <%= gurudwara.status === '2' ? 'selected' : '' %>>Inactive</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="images" class="block text-sm font-medium text-gray-700">Images</label>
+                <input
+                    type="file"
+                    name="images"
+                    id="images"
+                    multiple
+                    accept="image/*"
+                    class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3"
+                />
+                <% if (gurudwara.image_urls && JSON.parse(gurudwara.image_urls).length > 0) { %>
+                    <div class="mt-2 grid grid-cols-3 gap-2">
+                        <% JSON.parse(gurudwara.image_urls).forEach(url => { %>
+                            <img src="<%= url %>" alt="Gurudwara Image" class="w-full h-24 object-cover rounded-lg" />
+                        <% }) %>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <a href="/admin/gurudwaras" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Update Gurudwara
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

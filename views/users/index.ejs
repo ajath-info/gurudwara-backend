@@ -1,5 +1,3 @@
-
-
 <div class="space-y-6 p-6">
   <div class="flex items-center justify-between">
     <div>
@@ -117,22 +115,50 @@
                       <i class="fas fa-eye h-4 w-4"></i>
                     </a>
                     <% if (admin.role === 'super_admin') { %>
-                    <a
-                      href="/admin/users/<%= user.id %>/edit"
-                      class="text-indigo-600 hover:text-indigo-900"
-                      title="Edit User"
-                    >
-                      <i class="fas fa-edit h-4 w-4"></i>
-                    </a>
-                    <form method="POST" action="/admin/users/<%= user.id %>/delete?_method=POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this user?')">
-                      <button
-                        type="submit"
-                        class="text-red-600 hover:text-red-900"
-                        title="Delete User"
+                      <a
+                        href="/admin/users/<%= user.id %>/edit"
+                        class="text-indigo-600 hover:text-indigo-900"
+                        title="Edit User"
                       >
-                        <i class="fas fa-trash h-4 w-4"></i>
-                      </button>
-                    </form>
+                        <i class="fas fa-edit h-4 w-4"></i>
+                      </a>
+                      <% if (user.status === '1') { %>
+                        <form
+                          method="POST"
+                          action="/admin/users/<%= user.id %>/delete"
+                          class="inline"
+                          onsubmit="return confirm('Are you sure you want to delete this user? It will be marked as inactive.')"
+                        >
+                          <% if (typeof csrfToken !== 'undefined') { %>
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <% } %>
+                          <button
+                            type="submit"
+                            class="text-red-600 hover:text-red-900"
+                            title="Delete User"
+                          >
+                            <i class="fas fa-trash h-4 w-4"></i>
+                          </button>
+                        </form>
+                      <% } else { %>
+                        <form
+                          method="POST"
+                          action="/admin/users/<%= user.id %>/restore"
+                          class="inline"
+                          onsubmit="return confirm('Are you sure you want to restore this user?')"
+                        >
+                          <% if (typeof csrfToken !== 'undefined') { %>
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <% } %>
+                          <button
+                            type="submit"
+                            class="text-orange-600 hover:text-orange-900"
+                            title="Restore User"
+                          >
+                            <i class="fas fa-undo h-4 w-4"></i>
+                          </button>
+                        </form>
+                      <% } %>
                     <% } %>
                   </div>
                 </td>
@@ -149,21 +175,46 @@
       </table>
     </div>
 
+    <% if (pagination && pagination.totalPages > 1) { %>
     <div class="px-6 py-4 border-t border-gray-200">
       <div class="flex items-center justify-between">
         <div class="text-sm text-gray-700">
-          Showing <%= users ? users.length : 0 %> users
+          Showing <%= pagination.startIndex %> to <%= pagination.endIndex %> of <%= pagination.totalItems %> users
         </div>
         <div class="flex items-center space-x-2">
-          <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50" disabled>
-            Previous
-          </button>
-          <button class="px-3 py-1 bg-blue-600 text-white rounded">1</button>
-          <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">
-            Next
-          </button>
+          <% if (pagination.currentPage > 1) { %>
+            <a href="?page=<%= pagination.currentPage - 1 %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %><%= typeof statusFilter !== 'undefined' && statusFilter !== 'all' ? '&status=' + statusFilter : '' %>"
+               class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200">
+              Previous
+            </a>
+          <% } else { %>
+            <button class="px-3 py-1 border border-gray-300 rounded bg-gray-100 text-gray-400 cursor-not-allowed" disabled>
+              Previous
+            </button>
+          <% } %>
+
+          <% for (let i = Math.max(1, pagination.currentPage - 2); i <= Math.min(pagination.totalPages, pagination.currentPage + 2); i++) { %>
+            <% if (i === pagination.currentPage) { %>
+              <button class="px-3 py-1 bg-blue-600 text-white rounded"><%= i %></button>
+            <% } else { %>
+              <a href="?page=<%= i %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %><%= typeof statusFilter !== 'undefined' && statusFilter !== 'all' ? '&status=' + statusFilter : '' %>"
+                 class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200"><%= i %></a>
+            <% } %>
+          <% } %>
+
+          <% if (pagination.currentPage < pagination.totalPages) { %>
+            <a href="?page=<%= pagination.currentPage + 1 %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %><%= typeof statusFilter !== 'undefined' && statusFilter !== 'all' ? '&status=' + statusFilter : '' %>"
+               class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200">
+              Next
+            </a>
+          <% } else { %>
+            <button class="px-3 py-1 border border-gray-300 rounded bg-gray-100 text-gray-400 cursor-not-allowed" disabled>
+              Next
+            </button>
+          <% } %>
         </div>
       </div>
     </div>
+    <% } %>
   </div>
 </div>

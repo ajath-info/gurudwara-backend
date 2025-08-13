@@ -1,0 +1,46 @@
+<div class="space-y-6 p-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">
+        QR Code - <%= gurudwara.name %>
+      </h1>
+      <p class="text-gray-600">View and download QR code for the gurudwara</p>
+    </div>
+    <a
+      href="/admin/gurudwaras"
+      class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center space-x-2"
+    >
+      <i class="fas fa-arrow-left h-4 w-4"></i>
+      <span>Back to Gurudwaras</span>
+    </a>
+  </div>
+
+  <div
+    class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center"
+  >
+    <img
+      src="<%= gurudwara.qr_code_url %>"
+      alt="QR Code for <%= gurudwara.name %>"
+      class="w-64 h-64 mx-auto border border-gray-200 rounded-lg"
+    />
+    <div class="mt-4">
+      <button
+        onclick="downloadQR()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center mx-auto space-x-2"
+      >
+        <i class="fas fa-download h-4 w-4"></i>
+        <span>Download QR Code</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function downloadQR() {
+    const qrImage = document.querySelector("img");
+    const link = document.createElement("a");
+    link.href = qrImage.src;
+    link.download = "qr-code-<%= gurudwara.name %>.png";
+    link.click();
+  }
+</script>

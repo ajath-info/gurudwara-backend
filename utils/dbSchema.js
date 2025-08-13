@@ -67,7 +67,7 @@ export const createDbSchema = async () => {
             points INT NOT NULL,
             status ENUM('1', '2') NOT NULL DEFAULT '1',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )`);
 
     await db.query(`CREATE TABLE IF NOT EXISTS quiz_submissions (

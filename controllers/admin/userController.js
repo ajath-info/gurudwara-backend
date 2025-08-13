@@ -5,21 +5,60 @@ export const userController = {
   getAllUsers: async (req, res) => {
     try {
       const admin = req.admin;
+      const { page = 1, search, status } = req.query;
+      const limit = 10; // Number of users per page
+      const offset = (page - 1) * limit;
+
       let query = `
         SELECT 
           id, name, phone, profile_image, device_type, status, created_at 
         FROM users 
-        ORDER BY created_at DESC
+        WHERE 1=1
       `;
+      let countQuery = "SELECT COUNT(*) as total FROM users WHERE 1=1";
+      const params = [];
+      const countParams = [];
 
-      const [users] = await db.query(query);
+      if (search) {
+        query += " AND (name LIKE ? OR phone LIKE ?)";
+        countQuery += " AND (name LIKE ? OR phone LIKE ?)";
+        params.push(`%${search}%`, `%${search}%`);
+        countParams.push(`%${search}%`, `%${search}%`);
+      }
+
+      if (status && status !== "all") {
+        query += " AND status = ?";
+        countQuery += " AND status = ?";
+        params.push(status);
+        countParams.push(status);
+      }
+
+      query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+      params.push(limit, offset);
+
+      const [users] = await db.query(query, params);
+      const [[{ total }]] = await db.query(countQuery, countParams);
+
+      const totalPages = Math.ceil(total / limit);
+      const startIndex = offset + 1;
+      const endIndex = Math.min(offset + limit, total);
 
       res.render("users/index", {
         title: "Users Management",
         users,
         admin,
+        searchTerm: search || "",
+        statusFilter: status || "all",
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalItems: total,
+          startIndex,
+          endIndex,
+        },
         layout: "layouts/admin",
         req: req,
+        csrfToken: req.csrfToken ? req.csrfToken() : undefined,
       });
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -322,6 +361,53 @@ export const userController = {
     }
   },
 
+  // Restore user
+  restoreUser: async (req, res) => {
+    try {
+      const admin = req.admin;
+      const { id } = req.params;
+      if (admin.role === "super_admin") {
+        req.session = req.session || {};
+        req.session.toast = {
+          type: "error",
+          message: "Access denied",
+        };
+      }
+
+      // Check if user exists
+      const [users] = await db.query("SELECT name FROM users WHERE id = ?", [
+        id,
+      ]);
+
+      if (users.length === 0) {
+        req.session = req.session || {};
+        req.session.toast = {
+          type: "error",
+          message: "User not found",
+        };
+        return res.redirect("/admin/users");
+      }
+      // Restore user
+      await db.query(
+        `UPDATE users SET status = '1' WHERE id = ? AND status = '2'`,
+        [id]
+      );
+      req.session = req.session || {};
+      req.session.toast = {
+        type: "success",
+        message: `User "${users[0].name}" restored successfully`,
+      };
+      res.redirect("/admin/users");
+    } catch (err) {
+      console.error(err);
+      res.session = req.session || {};
+      req.session.toast = {
+        type: "error",
+        message: "Error restoring user",
+      };
+      res.redirect("/admin/users");
+    }
+  },
   // Search and filter users
   searchUsers: async (req, res) => {
     try {

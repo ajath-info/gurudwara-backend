@@ -1,0 +1,347 @@
+<div class="space-y-6 p-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Quizzes</h1>
+      <p class="text-gray-600">Manage knowledge quizzes for users</p>
+    </div>
+    <% if (admin.role === 'super_admin') { %>
+    <a
+      href="/admin/quizzes/create"
+      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+    >
+      <i class="fas fa-plus h-4 w-4"></i>
+      <span>Add Quiz</span>
+    </a>
+    <% } %>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+      <form
+        method="GET"
+        action="/admin/quizzes"
+        class="flex items-center justify-between space-x-4"
+      >
+        <div class="flex items-center space-x-4 flex-1">
+          <div class="relative">
+            <i
+              class="fas fa-search h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
+            ></i>
+            <input
+              type="text"
+              name="search"
+              placeholder="Search quizzes..."
+              value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>"
+              class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80"
+            />
+          </div>
+        </div>
+        <button
+          type="submit"
+          class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+        >
+          <i class="fas fa-filter h-4 w-4"></i>
+          <span>Filter</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="space-y-4 p-6">
+      <% if (quizzes && quizzes.length > 0) { %> <% quizzes.forEach(quiz => { %>
+      <div
+        class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200"
+      >
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center space-x-3 mb-2">
+              <i class="fas fa-question-circle h-5 w-5 text-blue-600"></i>
+              <h3 class="text-lg font-semibold text-gray-900">
+                <%= quiz.question %>
+              </h3>
+            </div>
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-medium text-gray-700">Options:</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div
+                  class="<%= quiz.correct_option === 1 ? 'bg-green-50 border border-green-200' : 'bg-gray-50' %> text-sm p-2 rounded"
+                >
+                  1. <%= quiz.option_1 %>
+                </div>
+                <div
+                  class="<%= quiz.correct_option === 2 ? 'bg-green-50 border border-green-200' : 'bg-gray-50' %> text-sm p-2 rounded"
+                >
+                  2. <%= quiz.option_2 %>
+                </div>
+                <div
+                  class="<%= quiz.correct_option === 3 ? 'bg-green-50 border border-green-200' : 'bg-gray-50' %> text-sm p-2 rounded"
+                >
+                  3. <%= quiz.option_3 %>
+                </div>
+                <div
+                  class="<%= quiz.correct_option === 4 ? 'bg-green-50 border border-green-200' : 'bg-gray-50' %> text-sm p-2 rounded"
+                >
+                  4. <%= quiz.option_4 %>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-award h-4 w-4 mr-1"></i>
+                <span><%= quiz.points %> points</span>
+              </div>
+              <div class="text-sm text-gray-500">
+                Created <%= new Date(quiz.created_at).toLocaleDateString() %>
+              </div>
+              <% if (quiz.status === '1') { %>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >Active</span
+              >
+              <% } else { %>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                >Inactive</span
+              >
+              <% } %>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 ml-4">
+            <!-- <a
+              href="/admin/quizzes/<%= quiz.id %>"
+              class="text-blue-600 hover:text-blue-900"
+              title="View Details"
+            >
+              <i class="fas fa-eye h-4 w-4"></i>
+            </a> -->
+            <% if (admin.role === 'super_admin') { %>
+            <a
+              href="/admin/quizzes/<%= quiz.id %>/edit"
+              class="text-indigo-600 hover:text-indigo-900"
+              title="Edit"
+            >
+              <i class="fas fa-edit h-4 w-4"></i>
+            </a>
+            <% if (quiz.status === '1') { %>
+            <form
+              method="POST"
+              action="/admin/quizzes/<%= quiz.id %>/delete"
+              class="inline"
+              onsubmit="return confirm('Are you sure you want to delete this quiz? It will be marked as inactive.')"
+            >
+              <% if (typeof csrfToken !== 'undefined') { %>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+              <% } %>
+              <button
+                type="submit"
+                class="text-red-600 hover:text-red-900"
+                title="Delete"
+              >
+                <i class="fas fa-trash h-4 w-4"></i>
+              </button>
+            </form>
+            <% } else { %>
+            <form
+              method="POST"
+              action="/admin/quizzes/<%= quiz.id %>/restore"
+              class="inline"
+              onsubmit="return confirm('Are you sure you want to restore this quiz?')"
+            >
+              <% if (typeof csrfToken !== 'undefined') { %>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+              <% } %>
+              <button
+                type="submit"
+                class="text-green-600 hover:text-green-900"
+                title="Restore"
+              >
+                <i class="fas fa-undo h-4 w-4"></i>
+              </button>
+            </form>
+            <% } %> <% } %>
+          </div>
+        </div>
+      </div>
+      <% }) %> <% } else { %>
+      <div class="text-center py-12">
+        <div class="text-gray-500">
+          <i class="fas fa-search text-4xl mb-4"></i>
+          <p class="text-lg">No quizzes found</p>
+          <p class="text-sm">Try adjusting your search criteria</p>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <% if (pagination && pagination.totalPages > 1) { %>
+    <div class="px-6 py-4 border-t border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Showing <%= pagination.startIndex %> to <%= pagination.endIndex %> of
+          <%= pagination.totalItems %> quizzes
+        </div>
+        <div class="flex items-center space-x-2">
+          <% if (pagination.currentPage > 1) { %>
+          <a
+            href="?page=<%= pagination.currentPage - 1 %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %>"
+            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200"
+          >
+            Previous
+          </a>
+          <% } else { %>
+          <button
+            class="px-3 py-1 border border-gray-300 rounded bg-gray-100 text-gray-400 cursor-not-allowed"
+            disabled
+          >
+            Previous
+          </button>
+          <% } %> <% for (let i = Math.max(1, pagination.currentPage - 2); i <=
+          Math.min(pagination.totalPages, pagination.currentPage + 2); i++) { %>
+          <% if (i === pagination.currentPage) { %>
+          <button class="px-3 py-1 bg-blue-600 text-white rounded">
+            <%= i %>
+          </button>
+          <% } else { %>
+          <a
+            href="?page=<%= i %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %>"
+            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200"
+            ><%= i %></a
+          >
+          <% } %> <% } %> <% if (pagination.currentPage < pagination.totalPages)
+          { %>
+          <a
+            href="?page=<%= pagination.currentPage + 1 %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %>"
+            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200"
+          >
+            Next
+          </a>
+          <% } else { %>
+          <button
+            class="px-3 py-1 border border-gray-300 rounded bg-gray-100 text-gray-400 cursor-not-allowed"
+            disabled
+          >
+            Next
+          </button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+
+  <% if (typeof selectedQuiz !== 'undefined' && selectedQuiz && isModalOpen) {
+  %>
+  <div
+    id="quizModal"
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"
+  >
+    <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-900">Quiz Details</h3>
+        <a href="/admin/quizzes" class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times h-5 w-5"></i>
+        </a>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            <%= selectedQuiz.question %>
+          </h3>
+          <div class="space-y-3">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700"
+                >Answer Options:</label
+              >
+              <div class="space-y-2">
+                <div
+                  class="<%= selectedQuiz.correct_option === 1 ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %> p-3 rounded-lg"
+                >
+                  <div class="flex items-center justify-between">
+                    <span>1. <%= selectedQuiz.option_1 %></span>
+                    <% if (selectedQuiz.correct_option === 1) { %>
+                    <span class="text-green-600 font-medium">✓ Correct</span>
+                    <% } %>
+                  </div>
+                </div>
+                <div
+                  class="<%= selectedQuiz.correct_option === 2 ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %> p-3 rounded-lg"
+                >
+                  <div class="flex items-center justify-between">
+                    <span>2. <%= selectedQuiz.option_2 %></span>
+                    <% if (selectedQuiz.correct_option === 2) { %>
+                    <span class="text-green-600 font-medium">✓ Correct</span>
+                    <% } %>
+                  </div>
+                </div>
+                <div
+                  class="<%= selectedQuiz.correct_option === 3 ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %> p-3 rounded-lg"
+                >
+                  <div class="flex items-center justify-between">
+                    <span>3. <%= selectedQuiz.option_3 %></span>
+                    <% if (selectedQuiz.correct_option === 3) { %>
+                    <span class="text-green-600 font-medium">✓ Correct</span>
+                    <% } %>
+                  </div>
+                </div>
+                <div
+                  class="<%= selectedQuiz.correct_option === 4 ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %> p-3 rounded-lg"
+                >
+                  <div class="flex items-center justify-between">
+                    <span>4. <%= selectedQuiz.option_4 %></span>
+                    <% if (selectedQuiz.correct_option === 4) { %>
+                    <span class="text-green-600 font-medium">✓ Correct</span>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Points Awarded</label
+            >
+            <p class="mt-1 text-sm text-gray-900"><%= selectedQuiz.points %></p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Status</label
+            >
+            <div class="mt-1">
+              <% if (selectedQuiz.status === '1') { %>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >Active</span
+              >
+              <% } else { %>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                >Inactive</span
+              >
+              <% } %>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Created</label
+            >
+            <p class="mt-1 text-sm text-gray-900">
+              <%= new Date(selectedQuiz.created_at).toLocaleDateString() %>
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Last Updated</label
+            >
+            <p class="mt-1 text-sm text-gray-900">
+              <%= new Date(selectedQuiz.updated_at).toLocaleDateString() %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>

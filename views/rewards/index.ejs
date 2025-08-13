@@ -1,0 +1,318 @@
+<div class="space-y-6 p-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">
+        <% if (admin.role === 'local_admin') { %>My Rewards<% } else {
+        %>Rewards<% } %>
+      </h1>
+      <p class="text-gray-600">
+        <% if (admin.role === 'local_admin') { %> Manage rewards for your
+        gurudwara <% } else { %> View all rewards across gurudwaras <% } %>
+      </p>
+    </div>
+    <% if (admin.role === 'local_admin') { %>
+    <a
+      href="/admin/rewards/create"
+      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+    >
+      <i class="fas fa-plus h-4 w-4"></i>
+      <span>Add Reward</span>
+    </a>
+    <% } %>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+      <form
+        method="GET"
+        action="/admin/rewards"
+        class="flex items-center justify-between space-x-4"
+      >
+        <div class="flex items-center space-x-4 flex-1">
+          <div class="relative">
+            <i
+              class="fas fa-search h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
+            ></i>
+            <input
+              type="text"
+              name="search"
+              placeholder="Search rewards..."
+              value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>"
+              class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80"
+            />
+          </div>
+        </div>
+        <button
+          type="submit"
+          class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+        >
+          <i class="fas fa-filter h-4 w-4"></i>
+          <span>Filter</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+      <% if (rewards && rewards.length > 0) { %> <% rewards.forEach(reward => {
+      %>
+      <div
+        class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200"
+      >
+        <div class="aspect-w-16 aspect-h-9">
+          <img
+            src="<%= reward.image_urls && reward.image_urls.length > 0 ? reward.image_urls[0] : '/images/default-reward.jpg' %>"
+            alt="<%= reward.title %>"
+            class="w-full h-48 object-cover"
+            onerror="this.src='/images/default-reward.jpg'"
+          />
+        </div>
+        <div class="p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-lg font-semibold text-gray-900">
+              <%= reward.title %>
+            </h3>
+            <% if (reward.status === '1') { %>
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+              >Active</span
+            >
+            <% } else { %>
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+              >Inactive</span
+            >
+            <% } %>
+          </div>
+          <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+            <%= reward.description %>
+          </p>
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center text-sm text-gray-600">
+              <i class="fas fa-gift h-4 w-4 mr-1"></i>
+              <span><%= reward.points %> points</span>
+            </div>
+            <% if (admin.role === 'super_admin') { %>
+            <div class="flex items-center text-xs text-gray-500">
+              <i class="fas fa-map-pin h-3 w-3 mr-1"></i>
+              <span><%= reward.gurudwara_name %></span>
+            </div>
+            <% } %>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="text-xs text-gray-500">
+              Added <%= new Date(reward.created_at).toLocaleDateString() %>
+            </div>
+            <div class="flex items-center space-x-2">
+              <a
+                href="/admin/rewards/<%= reward.id %>"
+                class="text-blue-600 hover:text-blue-900"
+                title="View Details"
+              >
+                <i class="fas fa-eye h-4 w-4"></i>
+              </a>
+              <% if (admin.role === 'local_admin' && admin.gurudwara_id ===
+              reward.gurudwara_id) { %>
+              <a
+                href="/admin/rewards/<%= reward.id %>/edit"
+                class="text-indigo-600 hover:text-indigo-900"
+                title="Edit"
+              >
+                <i class="fas fa-edit h-4 w-4"></i>
+              </a>
+              <% if (reward.status === '1') { %>
+              <form
+                method="POST"
+                action="/admin/rewards/<%= reward.id %>/delete"
+                class="inline"
+                onsubmit="return confirm('Are you sure you want to delete this reward? It will be marked as inactive.')"
+              >
+                <% if (typeof csrfToken !== 'undefined') { %>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <% } %>
+                <button
+                  type="submit"
+                  class="text-red-600 hover:text-red-900"
+                  title="Delete"
+                >
+                  <i class="fas fa-trash h-4 w-4"></i>
+                </button>
+              </form>
+              <% } else { %>
+              <form
+                method="POST"
+                action="/admin/rewards/<%= reward.id %>/restore"
+                class="inline"
+              >
+                <% if (typeof csrfToken !== 'undefined') { %>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <% } %>
+                <button
+                  type="submit"
+                  class="text-green-600 hover:text-green-900"
+                  title="Restore"
+                >
+                  <i class="fas fa-undo h-4 w-4"></i>
+                </button>
+              </form>
+              <% } %> <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% }) %> <% } else { %>
+      <div class="col-span-full text-center py-12">
+        <div class="text-gray-500">
+          <i class="fas fa-search text-4xl mb-4"></i>
+          <p class="text-lg">No rewards found</p>
+          <p class="text-sm">Try adjusting your search criteria</p>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <% if (pagination && pagination.totalPages > 1) { %>
+    <div class="px-6 py-4 border-t border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Showing <%= pagination.startIndex %> to <%= pagination.endIndex %> of
+          <%= pagination.totalItems %> rewards
+        </div>
+        <div class="flex items-center space-x-2">
+          <% if (pagination.currentPage > 1) { %>
+          <a
+            href="?page=<%= pagination.currentPage - 1 %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %>"
+            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200"
+          >
+            Previous
+          </a>
+          <% } else { %>
+          <button
+            class="px-3 py-1 border border-gray-300 rounded bg-gray-100 text-gray-400 cursor-not-allowed"
+            disabled
+          >
+            Previous
+          </button>
+          <% } %> <% for (let i = Math.max(1, pagination.currentPage - 2); i <=
+          Math.min(pagination.totalPages, pagination.currentPage + 2); i++) { %>
+          <% if (i === pagination.currentPage) { %>
+          <button class="px-3 py-1 bg-blue-600 text-white rounded">
+            <%= i %>
+          </button>
+          <% } else { %>
+          <a
+            href="?page=<%= i %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %>"
+            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200"
+            ><%= i %></a
+          >
+          <% } %> <% } %> <% if (pagination.currentPage < pagination.totalPages)
+          { %>
+          <a
+            href="?page=<%= pagination.currentPage + 1 %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %>"
+            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-200"
+          >
+            Next
+          </a>
+          <% } else { %>
+          <button
+            class="px-3 py-1 border border-gray-300 rounded bg-gray-100 text-gray-400 cursor-not-allowed"
+            disabled
+          >
+            Next
+          </button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+
+  <% if (typeof selectedReward !== 'undefined' && selectedReward && isModalOpen)
+  { %>
+  <div
+    id="rewardModal"
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"
+  >
+    <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-900">Reward Details</h3>
+        <a href="/admin/rewards" class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times h-5 w-5"></i>
+        </a>
+      </div>
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <% if (selectedReward.image_urls && selectedReward.image_urls.length >
+          0) { %> <% selectedReward.image_urls.forEach(image => { %>
+          <div class="aspect-w-16 aspect-h-9">
+            <img
+              src="<%= image %>"
+              alt="<%= selectedReward.title %>"
+              class="w-full h-48 object-cover rounded-lg"
+              onerror="this.src='/images/default-reward.jpg'"
+            />
+          </div>
+          <% }) %> <% } else { %>
+          <div class="aspect-w-16 aspect-h-9">
+            <img
+              src="/images/default-reward.jpg"
+              alt="<%= selectedReward.title %>"
+              class="w-full h-48 object-cover rounded-lg"
+            />
+          </div>
+          <% } %>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">
+            <%= selectedReward.title %>
+          </h3>
+          <p class="text-gray-600 mb-4"><%= selectedReward.description %></p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Points Required</label
+            >
+            <p class="mt-1 text-sm text-gray-900">
+              <%= selectedReward.points %>
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Status</label
+            >
+            <div class="mt-1">
+              <% if (selectedReward.status === '1') { %>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >Active</span
+              >
+              <% } else { %>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                >Inactive</span
+              >
+              <% } %>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Gurudwara</label
+            >
+            <p class="mt-1 text-sm text-gray-900">
+              <%= selectedReward.gurudwara_name %>
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Created</label
+            >
+            <p class="mt-1 text-sm text-gray-900">
+              <%= new Date(selectedReward.created_at).toLocaleDateString() %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>
