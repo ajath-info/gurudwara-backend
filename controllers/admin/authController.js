@@ -100,4 +100,19 @@ export const authController = {
       });
     }
   },
+  // Logout
+  handleLogout: async (req, res) => {
+    try {
+      res.clearCookie("ADMIN_TOKEN");
+      res.redirect("/admin/auth/login");
+      req.session.toast = {
+        type: "success",
+        message: "Logged out successfully!",
+      };
+      return res.redirect("/admin/auth/login");
+    } catch (err) {
+      console.error("this is the error", err);
+      res.redirect("/admin/");
+    }
+  },
 };

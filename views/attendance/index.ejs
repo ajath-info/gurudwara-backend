@@ -1,0 +1,302 @@
+
+
+<div class="space-y-6 p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">
+        <%= admin.role === 'local_admin' ? 'My Gurudwara Attendance' : 'Attendance Logs' %>
+      </h1>
+      <p class="text-gray-600">
+        <%= admin.role === 'local_admin' ? 'Monitor daily visits to your gurudwara' : 'Monitor daily visits across all gurudwaras' %>
+      </p>
+    </div>
+    <a href="/admin/attendance/export" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+      </svg>
+      <span>Download CSV</span>
+    </a>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Visits</p>
+          <p class="text-2xl font-bold text-gray-900"><%= stats.totalVisits %></p>
+        </div>
+        <div class="p-3 bg-blue-100 rounded-lg">
+          <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Unique Visitors</p>
+          <p class="text-2xl font-bold text-gray-900"><%= stats.uniqueVisitors %></p>
+        </div>
+        <div class="p-3 bg-green-100 rounded-lg">
+          <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Points Awarded</p>
+          <p class="text-2xl font-bold text-gray-900"><%= stats.totalPoints %></p>
+        </div>
+        <div class="p-3 bg-purple-100 rounded-lg">
+          <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">First Time Visits</p>
+          <p class="text-2xl font-bold text-gray-900"><%= stats.firstTimeVisits %></p>
+        </div>
+        <div class="p-3 bg-orange-100 rounded-lg">
+          <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table and Filters -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center justify-between space-x-4">
+        <div class="flex items-center space-x-4 flex-1">
+          <div class="relative">
+            <svg class="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input
+              type="text"
+              name="search"
+              placeholder="Search by user name, phone, or gurudwara..."
+              value="<%= searchTerm %>"
+              class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80"
+            />
+          </div>
+          <select
+            name="date"
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="today" <%= dateFilter === 'today' ? 'selected' : '' %>>Today</option>
+            <option value="yesterday" <%= dateFilter === 'yesterday' ? 'selected' : '' %>>Yesterday</option>
+            <option value="week" <%= dateFilter === 'week' ? 'selected' : '' %>>This Week</option>
+            <option value="month" <%= dateFilter === 'month' ? 'selected' : '' %>>This Month</option>
+            <option value="all" <%= dateFilter === 'all' ? 'selected' : '' %>>All Time</option>
+          </select>
+          <% if (admin.role === 'super_admin') { %>
+            <select
+              name="gurudwara"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all" <%= gurudwaraFilter === 'all' ? 'selected' : '' %>>All Gurudwaras</option>
+              <% availableGurudwaras.forEach(gurudwara => { %>
+                <option value="<%= gurudwara.id %>" <%= gurudwaraFilter === gurudwara.id.toString() ? 'selected' : '' %>><%= gurudwara.name %></option>
+              <% }) %>
+            </select>
+          <% } %>
+        </div>
+        <button class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+          </svg>
+          <span>More Filters</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visit Details</th>
+            <% if (admin.role === 'super_admin') { %>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gurudwara</th>
+            <% } %>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% attendanceLogs.forEach(log => { %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900"><%= log.user_name %></div>
+                    <div class="text-sm text-gray-500"><%= log.user_phone %></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <svg class="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900"><%= log.visit_date %></div>
+                    <div class="text-sm text-gray-500"><%= log.visit_time %></div>
+                  </div>
+                </div>
+              </td>
+              <% if (admin.role === 'super_admin') { %>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <svg class="h-4 w-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="text-sm text-gray-900"><%= log.gurudwara_name %></span>
+                  </div>
+                </td>
+              <% } %>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <svg class="h-4 w-4 text-yellow-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <span class="text-sm font-medium text-gray-900">+<%= log.points_awarded %></span>
+                  <% if (log.is_first_visit_today) { %>
+                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      First Today
+                    </span>
+                  <% } %>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <svg class="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                  </svg>
+                  <span class="text-sm text-gray-900"><%= log.device_type || 'Unknown' %></span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button
+                  onclick="openModal('<%= log.id %>')"
+                  class="text-blue-600 hover:text-blue-900"
+                >
+                  View Details
+                </button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (attendanceLogs.length === 0) { %>
+      <div class="text-center py-12">
+        <svg class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <p class="text-gray-500">No attendance records found</p>
+      </div>
+    <% } %>
+
+    <div class="px-6 py-4 border-t border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Showing <%= pagination.startIndex %> to <%= pagination.endIndex %> of <%= pagination.totalItems %> attendance records
+        </div>
+        <div class="flex items-center space-x-2">
+          <a href="?page=<%= pagination.currentPage - 1 %>&search=<%= searchTerm %>&date=<%= dateFilter %>&gurudwara=<%= gurudwaraFilter %>" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 <%= pagination.currentPage === 1 ? 'opacity-50 cursor-not-allowed' : '' %>">Previous</a>
+          <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+            <a href="?page=<%= i %>&search=<%= searchTerm %>&date=<%= dateFilter %>&gurudwara=<%= gurudwaraFilter %>" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 <%= pagination.currentPage === i ? 'bg-blue-600 text-white' : '' %>"><%= i %></a>
+          <% } %>
+          <a href="?page=<%= pagination.currentPage + 1 %>&search=<%= searchTerm %>&date=<%= dateFilter %>&gurudwara=<%= gurudwaraFilter %>" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 <%= pagination.currentPage === pagination.totalPages ? 'opacity-50 cursor-not-allowed' : '' %>">Next</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="attendanceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Attendance Details</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="modalContent" class="space-y-4"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function openModal(logId) {
+    try {
+      const response = await fetch(`/admin/attendance/${logId}/details`);
+      const data = await response.json();
+      if (data.success) {
+        const log = data.log;
+        document.getElementById('modalContent').innerHTML = `
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h4 class="font-medium text-gray-900 mb-2">User Information</h4>
+            <div class="space-y-1 text-sm">
+              <p><span class="font-medium">Name:</span> ${log.user_name}</p>
+              <p><span class="font-medium">Phone:</span> ${log.user_phone}</p>
+              <p><span class="font-medium">User ID:</span> ${log.user_id}</p>
+            </div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h4 class="font-medium text-gray-900 mb-2">Visit Information</h4>
+            <div class="space-y-1 text-sm">
+              <p><span class="font-medium">Date:</span> ${log.visit_date}</p>
+              <p><span class="font-medium">Time:</span> ${log.visit_time}</p>
+              <p><span class="font-medium">Gurudwara:</span> ${log.gurudwara_name}</p>
+              <p><span class="font-medium">Points Awarded:</span> ${log.points_awarded}</p>
+              <p><span class="font-medium">First Visit Today:</span> ${log.is_first_visit_today ? 'Yes' : 'No'}</p>
+            </div>
+          </div>
+          ${log.device_type ? `
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="font-medium text-gray-900 mb-2">Device Information</h4>
+              <div class="space-y-1 text-sm">
+                <p><span class="font-medium">Type:</span> ${log.device_type}</p>
+              </div>
+            </div>
+          ` : ''}
+        `;
+        document.getElementById('attendanceModal').classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Error fetching attendance details:', error);
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('attendanceModal').classList.add('hidden');
+  }
+</script>

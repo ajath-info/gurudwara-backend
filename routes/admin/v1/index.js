@@ -9,6 +9,7 @@ import { rewardController } from "../../../controllers/admin/rewardsController.j
 import { quizController } from "../../../controllers/admin/quizController.js";
 import { pointsTrackingController } from "../../../controllers/admin/pointsTracking.js";
 import { rewardRedemptionsController } from "../../../controllers/admin/rewardsRedemptions.js";
+import { attendanceController } from "../../../controllers/admin/attendance.js";
 const ADMIN_ROUTER = express.Router();
 
 ADMIN_ROUTER.use(
@@ -30,11 +31,7 @@ ADMIN_ROUTER.get("/auth/login", authController.loginPage);
 // POST /admin/auth/login - Handle admin login form submission
 ADMIN_ROUTER.post("/auth/login", authController.handleLogin);
 
-// ADMIN_ROUTER.post(
-//   "/auth/logout",
-//   verifyAdminToken,
-//   authController.handleLogout
-// );
+ADMIN_ROUTER.get("/auth/logout", verifyAdminToken, authController.handleLogout);
 
 // =============================================================================
 // Dashboard Routes
@@ -331,6 +328,23 @@ ADMIN_ROUTER.get(
   "/reward-redemptions/export",
   verifyAdminToken,
   rewardRedemptionsController.exportRedemptions
+);
+
+// Attendance Routes
+ADMIN_ROUTER.get(
+  "/attendance",
+  verifyAdminToken,
+  attendanceController.getAttendanceLogs
+);
+ADMIN_ROUTER.get(
+  "/attendance/:id/details",
+  verifyAdminToken,
+  attendanceController.getAttendanceDetails
+);
+ADMIN_ROUTER.get(
+  "/attendance/export",
+  verifyAdminToken,
+  attendanceController.exportAttendance
 );
 
 export default ADMIN_ROUTER;
