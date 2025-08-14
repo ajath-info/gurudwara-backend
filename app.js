@@ -17,7 +17,15 @@ import expressLayouts from "express-ejs-layouts";
 const app = express();
 
 // Middlewares
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+      },
+    },
+  })
+);
 app.set("view engine", "ejs");
 app.use(expressLayouts);
 app.set("layout", "root");
