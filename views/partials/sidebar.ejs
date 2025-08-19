@@ -94,30 +94,65 @@
       <!-- Points Tracking -->
       <a
         href="/admin/points-tracking"
-        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/attendance') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/points-tracking') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
       >
-        <i class="fas fa-calendar-check w-5 h-5"></i>
+        <i class="fas fa-chart-line w-5 h-5"></i>
         <span class="font-medium">Points Tracking</span>
       </a>
 
-      <!-- Analytics
-      <a
-        href="/admin/analytics"
-        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/analytics') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-chart-bar w-5 h-5"></i>
-        <span class="font-medium">Analytics</span>
-      </a> -->
-
-      <!-- Content (Super Admin Only) -->
+      <!-- Content Dropdown (Super Admin Only) -->
       <% if (admin.role === 'super_admin') { %>
-      <a
-        href="/admin/content"
-        class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/content') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
-      >
-        <i class="fas fa-file-text w-5 h-5"></i>
-        <span class="font-medium">Content</span>
-      </a>
+      <div class="menu-group">
+        <button
+          class="group-toggle nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary w-full text-left <%= req.path.startsWith('/admin/content') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
+        >
+          <i class="fas fa-file-text w-5 h-5"></i>
+          <span class="font-medium flex-1">Content</span>
+          <svg
+            class="w-4 h-4 transition-transform duration-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+        <div class="submenu hidden">
+          <a
+            href="/admin/content/articles"
+            class="flex items-center gap-3 hover:bg-gray-50 px-4 py-2 ml-8 text-sm border-l-4 border-transparent <%= req.path.startsWith('/admin/content/articles') ? 'bg-blue-50 text-blue-600 border-primary' : '' %>"
+          >
+            <i class="fas fa-newspaper w-4 h-4"></i>
+            <span>Articles</span>
+          </a>
+          <a
+            href="/admin/content/media"
+            class="flex items-center gap-3 hover:bg-gray-50 px-4 py-2 ml-8 text-sm border-l-4 border-transparent <%= req.path.startsWith('/admin/content/media') ? 'bg-blue-50 text-blue-600 border-primary' : '' %>"
+          >
+            <i class="fas fa-image w-4 h-4"></i>
+            <span>Media Gallery</span>
+          </a>
+          <a
+            href="/admin/content/announcements"
+            class="flex items-center gap-3 hover:bg-gray-50 px-4 py-2 ml-8 text-sm border-l-4 border-transparent <%= req.path.startsWith('/admin/content/announcements') ? 'bg-blue-50 text-blue-600 border-primary' : '' %>"
+          >
+            <i class="fas fa-bullhorn w-4 h-4"></i>
+            <span>Announcements</span>
+          </a>
+          <a
+            href="/admin/content/pages"
+            class="flex items-center gap-3 hover:bg-gray-50 px-4 py-2 ml-8 text-sm border-l-4 border-transparent <%= req.path.startsWith('/admin/content/pages') ? 'bg-blue-50 text-blue-600 border-primary' : '' %>"
+          >
+            <i class="fas fa-file-alt w-4 h-4"></i>
+            <span>Pages</span>
+          </a>
+        </div>
+      </div>
       <% } %>
 
       <!-- Settings -->

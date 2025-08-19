@@ -160,6 +160,7 @@ export const createDbSchema = async () => {
     await db.query(`CREATE TABLE IF NOT EXISTS admins (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
+    avatar TEXT NOT NULL DEFAULT '',
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('super_admin', 'local_admin') NOT NULL DEFAULT 'local_admin',

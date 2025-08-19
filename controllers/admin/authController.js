@@ -17,6 +17,7 @@ export const authController = {
   handleLogin: async (req, res) => {
     try {
       const { email, password, rememberMe } = req.body;
+      console.log(email, password);
 
       if (!email || !password) {
         return res.render("auth/login", {

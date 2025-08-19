@@ -10,6 +10,7 @@ import { quizController } from "../../../controllers/admin/quizController.js";
 import { pointsTrackingController } from "../../../controllers/admin/pointsTracking.js";
 import { rewardRedemptionsController } from "../../../controllers/admin/rewardsRedemptions.js";
 import { attendanceController } from "../../../controllers/admin/attendance.js";
+import { profileController } from "../../../controllers/admin/profileController.js";
 const ADMIN_ROUTER = express.Router();
 
 ADMIN_ROUTER.use(
@@ -347,4 +348,16 @@ ADMIN_ROUTER.get(
   attendanceController.exportAttendance
 );
 
+// Profile Routes
+ADMIN_ROUTER.get("/profile", verifyAdminToken, profileController.getProfile);
+ADMIN_ROUTER.post(
+  "/profile",
+  verifyAdminToken,
+  profileController.updateProfile
+);
+ADMIN_ROUTER.post(
+  "/profile/security",
+  verifyAdminToken,
+  profileController.updatePassword
+);
 export default ADMIN_ROUTER;

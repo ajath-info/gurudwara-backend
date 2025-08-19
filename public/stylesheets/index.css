@@ -388,6 +388,9 @@
   .block {
     display: block;
   }
+  .contents {
+    display: contents;
+  }
   .flex {
     display: flex;
   }
@@ -556,6 +559,10 @@
   }
   .-translate-y-1\/2 {
     --tw-translate-y: calc(calc(1/2 * 100%) * -1);
+    translate: var(--tw-translate-x) var(--tw-translate-y);
+  }
+  .translate-y-0 {
+    --tw-translate-y: calc(var(--spacing) * 0);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
   .transform {
@@ -774,6 +781,9 @@
   .border-none {
     --tw-border-style: none;
     border-style: none;
+  }
+  .border-blue-500 {
+    border-color: var(--color-blue-500);
   }
   .border-blue-600 {
     border-color: var(--color-blue-600);
