@@ -1,4 +1,13 @@
 import { db } from "../../utils/db.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs/promises";
+
+import { existsSync, mkdirSync } from "fs";
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const gurudwaraController = {
   // Get all gurudwaras with search, filter and pagination
@@ -199,8 +208,86 @@ export const gurudwaraController = {
         return res.redirect("/admin/gurudwaras");
       }
 
-      const { name, address, latitude, longitude, status } = req.body;
+      const { name, address, latitude, longitude, status, image_urls } =
+        req.body;
+      let imageUrlsArray = [];
 
+      // Handle uploaded images
+      if (req.files && req.files.images) {
+        const files = Array.isArray(req.files.images)
+          ? req.files.images
+          : [req.files.images];
+        const filetypes = /jpeg|jpg|png|gif|webp/;
+
+        // Ensure upload directory exists
+        const uploadDir = path.join(
+          __dirname,
+          "../../public/uploads/gurudwaras"
+        );
+        if (!existsSync(uploadDir)) {
+          mkdirSync(uploadDir, { recursive: true });
+        }
+
+        for (const file of files) {
+          // Validate file type
+          if (
+            !filetypes.test(file.mimetype) ||
+            !filetypes.test(path.extname(file.name).toLowerCase())
+          ) {
+            req.session = req.session || {};
+            req.session.toast = {
+              type: "error",
+              message:
+                "Only image files (jpeg, jpg, png, gif, webp) are allowed",
+            };
+            return res.redirect("/admin/gurudwaras/create");
+          }
+
+          // Validate file size (10MB limit)
+          if (file.size > 10 * 1024 * 1024) {
+            req.session = req.session || {};
+            req.session.toast = {
+              type: "error",
+              message: "File size exceeds 10MB limit",
+            };
+            return res.redirect("/admin/gurudwaras/create");
+          }
+
+          // Generate unique filename
+          const uniqueSuffix =
+            Date.now() + "-" + Math.round(Math.random() * 1e9);
+          const fileExtension = path.extname(file.name);
+          const filename = `gurudwara-${uniqueSuffix}${fileExtension}`;
+          const filepath = path.join(uploadDir, filename);
+
+          try {
+            // Move file to uploads directory
+            await file.mv(filepath);
+            imageUrlsArray.push(`/uploads/gurudwaras/${filename}`);
+          } catch (fileError) {
+            console.error("Error moving file:", fileError);
+            req.session = req.session || {};
+            req.session.toast = {
+              type: "error",
+              message: `Error uploading file: ${file.name}`,
+            };
+            return res.redirect("/admin/gurudwaras/create");
+          }
+        }
+      }
+
+      // Append manually provided image URLs (if any)
+      try {
+        const manualUrls = image_urls ? JSON.parse(image_urls) : [];
+        if (Array.isArray(manualUrls)) {
+          imageUrlsArray = [...imageUrlsArray, ...manualUrls];
+        }
+      } catch (error) {
+        console.log("No manual image URLs provided or invalid format");
+        // Continue without manual URLs - this is not a critical error
+      }
+
+      // Validate required fields
       if (!name || !address) {
         req.session = req.session || {};
         req.session.toast = {
@@ -210,9 +297,21 @@ export const gurudwaraController = {
         return res.redirect("/admin/gurudwaras/create");
       }
 
-      const imageUrls = req.files ? req.files.map((file) => file.path) : [];
+      // Validate coordinates (if provided, both must be provided)
+      if ((latitude && !longitude) || (!latitude && longitude)) {
+        req.session = req.session || {};
+        req.session.toast = {
+          type: "error",
+          message:
+            "Please provide both latitude and longitude or leave both empty",
+        };
+        return res.redirect("/admin/gurudwaras/create");
+      }
+
+      // Generate QR code URL
       const qrCodeUrl = `/qr-codes/gurudwara-${Date.now()}.png`;
 
+      // Insert into database
       await db.query(
         `INSERT INTO gurudwaras (name, address, latitude, longitude, image_urls, qr_code_url, status, created_at) 
          VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
@@ -221,7 +320,7 @@ export const gurudwaraController = {
           address,
           latitude || null,
           longitude || null,
-          JSON.stringify(imageUrls),
+          JSON.stringify(imageUrlsArray),
           qrCodeUrl,
           status || "1",
         ]
@@ -238,7 +337,7 @@ export const gurudwaraController = {
       req.session = req.session || {};
       req.session.toast = {
         type: "error",
-        message: "Error creating gurudwara",
+        message: "Error creating gurudwara. Please try again.",
       };
       res.redirect("/admin/gurudwaras/create");
     }
@@ -291,12 +390,20 @@ export const gurudwaraController = {
     }
   },
 
-  // Update gurudwara (Super admin only)
+  // Update gurudwara (Super admin only) - also updated with better file handling
   updateGurudwara: async (req, res) => {
     try {
       const admin = req.admin;
       const { id } = req.params;
-      const { name, address, latitude, longitude, status } = req.body;
+      const {
+        name,
+        address,
+        latitude,
+        longitude,
+        status,
+        image_urls,
+        keep_existing_images,
+      } = req.body;
 
       if (admin.role !== "super_admin") {
         req.session = req.session || {};
@@ -307,6 +414,7 @@ export const gurudwaraController = {
         return res.redirect("/admin/gurudwaras");
       }
 
+      // Validate required fields
       if (!name || !address) {
         req.session = req.session || {};
         req.session.toast = {
@@ -316,6 +424,7 @@ export const gurudwaraController = {
         return res.redirect(`/admin/gurudwaras/${id}/edit`);
       }
 
+      // Get existing gurudwara data
       const [existingGurudwara] = await db.query(
         "SELECT image_urls FROM gurudwaras WHERE id = ?",
         [id]
@@ -330,11 +439,106 @@ export const gurudwaraController = {
         return res.redirect("/admin/gurudwaras");
       }
 
-      const imageUrls =
-        req.files && req.files.length > 0
-          ? req.files.map((file) => file.path)
-          : JSON.parse(existingGurudwara[0].image_urls || "[]");
+      let imageUrlsArray = [];
 
+      // Keep existing images if requested
+      if (keep_existing_images === "true") {
+        try {
+          const existingImages = JSON.parse(
+            existingGurudwara[0].image_urls || "[]"
+          );
+          imageUrlsArray = [...existingImages];
+        } catch (error) {
+          console.log("Error parsing existing images");
+        }
+      }
+
+      // Handle new uploaded images
+      if (req.files && req.files.images) {
+        const files = Array.isArray(req.files.images)
+          ? req.files.images
+          : [req.files.images];
+        const filetypes = /jpeg|jpg|png|gif|webp/;
+
+        // Ensure upload directory exists
+        const uploadDir = path.join(
+          __dirname,
+          "../../public/uploads/gurudwaras"
+        );
+        if (!existsSync(uploadDir)) {
+          mkdirSync(uploadDir, { recursive: true });
+        }
+
+        for (const file of files) {
+          // Validate file type
+          if (
+            !filetypes.test(file.mimetype) ||
+            !filetypes.test(path.extname(file.name).toLowerCase())
+          ) {
+            req.session = req.session || {};
+            req.session.toast = {
+              type: "error",
+              message:
+                "Only image files (jpeg, jpg, png, gif, webp) are allowed",
+            };
+            return res.redirect(`/admin/gurudwaras/${id}/edit`);
+          }
+
+          // Validate file size (10MB limit)
+          if (file.size > 10 * 1024 * 1024) {
+            req.session = req.session || {};
+            req.session.toast = {
+              type: "error",
+              message: "File size exceeds 10MB limit",
+            };
+            return res.redirect(`/admin/gurudwaras/${id}/edit`);
+          }
+
+          // Generate unique filename
+          const uniqueSuffix =
+            Date.now() + "-" + Math.round(Math.random() * 1e9);
+          const fileExtension = path.extname(file.name);
+          const filename = `gurudwara-${uniqueSuffix}${fileExtension}`;
+          const filepath = path.join(uploadDir, filename);
+
+          try {
+            // Move file to uploads directory
+            await file.mv(filepath);
+            imageUrlsArray.push(`/uploads/gurudwaras/${filename}`);
+          } catch (fileError) {
+            console.error("Error moving file:", fileError);
+            req.session = req.session || {};
+            req.session.toast = {
+              type: "error",
+              message: `Error uploading file: ${file.name}`,
+            };
+            return res.redirect(`/admin/gurudwaras/${id}/edit`);
+          }
+        }
+      }
+
+      // Append manually provided image URLs (if any)
+      try {
+        const manualUrls = image_urls ? JSON.parse(image_urls) : [];
+        if (Array.isArray(manualUrls)) {
+          imageUrlsArray = [...imageUrlsArray, ...manualUrls];
+        }
+      } catch (error) {
+        console.log("No manual image URLs provided or invalid format");
+      }
+
+      // Validate coordinates
+      if ((latitude && !longitude) || (!latitude && longitude)) {
+        req.session = req.session || {};
+        req.session.toast = {
+          type: "error",
+          message:
+            "Please provide both latitude and longitude or leave both empty",
+        };
+        return res.redirect(`/admin/gurudwaras/${id}/edit`);
+      }
+
+      // Update database
       await db.query(
         `UPDATE gurudwaras 
          SET name = ?, address = ?, latitude = ?, longitude = ?, image_urls = ?, status = ?
@@ -344,7 +548,7 @@ export const gurudwaraController = {
           address,
           latitude || null,
           longitude || null,
-          JSON.stringify(imageUrls),
+          JSON.stringify(imageUrlsArray),
           status || "1",
           id,
         ]
@@ -361,7 +565,7 @@ export const gurudwaraController = {
       req.session = req.session || {};
       req.session.toast = {
         type: "error",
-        message: "Error updating gurudwara",
+        message: "Error updating gurudwara. Please try again.",
       };
       res.redirect(`/admin/gurudwaras/${id}/edit`);
     }

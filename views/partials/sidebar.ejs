@@ -106,8 +106,8 @@
         <button
           class="group-toggle nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary w-full text-left <%= req.path.startsWith('/admin/content') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
         >
-          <i class="fas fa-file-text w-5 h-5"></i>
-          <span class="font-medium flex-1">Content</span>
+          <i class="fas fa-cog w-5 h-5"></i>
+          <span class="font-medium flex-1">App Settings</span>
           <svg
             class="w-4 h-4 transition-transform duration-200"
             fill="none"
@@ -124,45 +124,45 @@
         </button>
         <div class="submenu hidden">
           <a
-            href="/admin/content/articles"
+            href="/admin/privacy-policy"
             class="flex items-center gap-3 hover:bg-gray-50 px-4 py-2 ml-8 text-sm border-l-4 border-transparent <%= req.path.startsWith('/admin/content/articles') ? 'bg-blue-50 text-blue-600 border-primary' : '' %>"
           >
-            <i class="fas fa-newspaper w-4 h-4"></i>
-            <span>Articles</span>
+         
+            <span>Privacy Policy</span>
           </a>
           <a
-            href="/admin/content/media"
+            href="/admin/terms-and-conditions"
             class="flex items-center gap-3 hover:bg-gray-50 px-4 py-2 ml-8 text-sm border-l-4 border-transparent <%= req.path.startsWith('/admin/content/media') ? 'bg-blue-50 text-blue-600 border-primary' : '' %>"
           >
-            <i class="fas fa-image w-4 h-4"></i>
-            <span>Media Gallery</span>
+           
+            <span>Terms & Conditions</span>
           </a>
           <a
-            href="/admin/content/announcements"
+            href="/admin/faqs"
             class="flex items-center gap-3 hover:bg-gray-50 px-4 py-2 ml-8 text-sm border-l-4 border-transparent <%= req.path.startsWith('/admin/content/announcements') ? 'bg-blue-50 text-blue-600 border-primary' : '' %>"
           >
-            <i class="fas fa-bullhorn w-4 h-4"></i>
-            <span>Announcements</span>
+            
+            <span>FAQs</span>
           </a>
-          <a
+          <!-- <a
             href="/admin/content/pages"
             class="flex items-center gap-3 hover:bg-gray-50 px-4 py-2 ml-8 text-sm border-l-4 border-transparent <%= req.path.startsWith('/admin/content/pages') ? 'bg-blue-50 text-blue-600 border-primary' : '' %>"
           >
             <i class="fas fa-file-alt w-4 h-4"></i>
-            <span>Pages</span>
+            <span>Pages</span> -->
           </a>
         </div>
       </div>
       <% } %>
 
       <!-- Settings -->
-      <a
+      <!-- <a
         href="/admin/settings"
         class="nav-item flex items-center gap-3 hover:bg-gray-100 px-4 py-3 border-l-4 border-transparent hover:border-primary <%= req.path.startsWith('/admin/settings') ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : '' %>"
       >
         <i class="fas fa-cog w-5 h-5"></i>
         <span class="font-medium">Settings</span>
-      </a>
+      </a> -->
     </nav>
   </div>
 

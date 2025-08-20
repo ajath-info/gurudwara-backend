@@ -1,310 +1,209 @@
 <div class="space-y-6 p-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Gurudwaras</h1>
-      <p class="text-gray-600">Manage all registered gurudwaras</p>
-    </div>
-    <% if (admin.role === 'super_admin') { %>
-    <a href="/admin/gurudwaras/create" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
-      <i class="fas fa-plus h-4 w-4"></i>
-      <span>Add Gurudwara</span>
-    </a>
-    <% } %>
-  </div>
-
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-    <div class="p-6 border-b border-gray-200">
-      <form method="GET" action="/admin/gurudwaras" class="flex items-center justify-between space-x-4">
-        <div class="flex items-center space-x-4 flex-1">
-          <div class="relative">
-            <i class="fas fa-search h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
-            <input
-              type="text"
-              name="search"
-              placeholder="Search gurudwaras..."
-              value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>"
-              class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80"
-            />
-          </div>
-          <select
-            name="status"
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'all') ? 'selected' : '' %>>All Status</option>
-            <option value="1" <%= (typeof statusFilter !== 'undefined' && statusFilter === '1') ? 'selected' : '' %>>Active</option>
-            <option value="2" <%= (typeof statusFilter !== 'undefined' && statusFilter === '2') ? 'selected' : '' %>>Inactive</option>
-          </select>
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Add New Gurudwara</h1>
+            <p class="text-gray-600">Create a new gurudwara entry in the system</p>
         </div>
-        <button type="submit" class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-          <i class="fas fa-filter h-4 w-4"></i>
-          <span>Filter</span>
-        </button>
-      </form>
+        <a href="/admin/gurudwaras" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center space-x-2">
+            <i class="fas fa-arrow-left h-4 w-4"></i>
+            <span>Back to Gurudwaras</span>
+        </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-      <% if (gurudwaras && gurudwaras.length > 0) { %>
-        <% gurudwaras.forEach(gurudwara => { %>
-          <div class="bg-white border border-gray-200 rounded-lg overflowing-hidden hover:shadow-md transition-shadow duration-200">
-            <div class="aspect-w-16 aspect-h-9">
-              <img
-                src="<%= gurudwara.image_urls && gurudwara.image_urls.length > 0 ? gurudwara.image_urls[0] : '/images/default-gurudwara.jpg' %>"
-                alt="<%= gurudwara.name %>"
-                class="w-full h-48 object-cover"
-                onerror="this.src='/images/default-gurudwara.jpg'"
-              />
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form action="/admin/gurudwaras/create" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Gurudwara Name <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    placeholder="Enter gurudwara name"
+                    class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    required
+                />
             </div>
-            <div class="p-4">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-lg font-semibold text-gray-900"><%= gurudwara.name %></h3>
-                <% if (gurudwara.status === '1') { %>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Active
-                  </span>
-                <% } else { %>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    Inactive
-                  </span>
-                <% } %>
-              </div>
-              <div class="flex items-center text-sm text-gray-600 mb-3">
-                <i class="fas fa-map-marker-alt h-4 w-4 mr-1"></i>
-                <span><%= gurudwara.address %></span>
-              </div>
-              <div class="flex items-center justify-between">
-                <div class="text-xs text-gray-500">
-                  Added <%= new Date(gurudwara.created_at).toLocaleDateString() %>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <a
-                    href="/admin/gurudwaras/<%= gurudwara.id %>"
-                    class="text-blue-600 hover:text-blue-900"
-                    title="View Details"
-                  >
-                    <i class="fas fa-eye h-4 w-4"></i>
-                  </a>
-                  <% if (admin.role === 'super_admin') { %>
-                    <a
-                      href="/admin/gurudwaras/<%= gurudwara.id %>/edit"
-                      class="text-indigo-600 hover:text-indigo-900"
-                      title="Edit"
-                    >
-                      <i class="fas fa-edit h-4 w-4"></i>
-                    </a>
-                  <% } %>
-                  <a
-                    href="/admin/gurudwaras/<%= gurudwara.id %>/qr"
-                    class="text-green-600 hover:text-green-900"
-                    title="View QR Code"
-                  >
-                    <i class="fas fa-qrcode h-4 w-4"></i>
-                  </a>
-                  <% if (admin.role === 'super_admin') { %>
-                    <% if (gurudwara.status === '1') { %>
-                      <form
-                        method="POST"
-                        action="/admin/gurudwaras/<%= gurudwara.id %>/delete"
-                        class="inline"
-                        onsubmit="return confirm('Are you sure you want to delete this gurudwara? It will be marked as inactive.')"
-                      >
-                        <button
-                          type="submit"
-                          class="text-red-600 hover:text-red-900"
-                          title="Delete"
-                        >
-                          <i class="fas fa-trash h-4 w-4"></i>
-                        </button>
-                      </form>
-                    <% } else { %>
-                      <form
-                        method="POST"
-                        action="/admin/gurudwaras/<%= gurudwara.id %>/restore"
-                        class="inline"
-                        onsubmit="return confirm('Are you sure you want to restore this gurudwara?')"
-                      >
-                        <button
-                          type="submit"
-                          class="text-orange-600 hover:text-orange-900"
-                          title="Restore"
-                        >
-                          <i class="fas fa-undo h-4 w-4"></i>
-                        </button>
-                      </form>
-                    <% } %>
-                  <% } %>
-                </div>
-              </div>
+
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+                    Address <span class="text-red-500">*</span>
+                </label>
+                <textarea
+                    name="address"
+                    id="address"
+                    placeholder="Enter complete address of the gurudwara"
+                    class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    rows="4"
+                    required
+                ></textarea>
             </div>
-          </div>
-        <% }) %>
-      <% } else { %>
-        <div class="col-span-full text-center py-12">
-          <div class="text-gray-500">
-            <i class="fas fa-search text-4xl mb-4"></i>
-            <p class="text-lg">No gurudwaras found</p>
-            <p class="text-sm">Try adjusting your search or filter criteria</p>
-          </div>
-        </div>
-      <% } %>
-    </div>
 
-    <!-- Pagination -->
-    <% if (pagination && pagination.totalPages > 1) { %>
-    <div class="px-6 py-4 border-t border-gray-200">
-      <div class="flex items-center justify-between">
-        <div class="text-sm text-gray-700">
-          Showing <%= pagination.startIndex %> to <%= pagination.endIndex %> of <%= pagination.totalItems %> gurudwaras
-        </div>
-        <div class="flex items-center space-x-2">
-          <% if (pagination.currentPage > 1) { %>
-            <a href="?page=<%= pagination.currentPage - 1 %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %><%= typeof statusFilter !== 'undefined' && statusFilter !== 'all' ? '&status=' + statusFilter : '' %>"
-               class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Previous</a>
-          <% } else { %>
-            <button class="px-3 py-1 border border-gray-300 rounded bg-gray-100 text-gray-400 cursor-not-allowed" disabled>Previous</button>
-          <% } %>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="latitude" class="block text-sm font-medium text-gray-700 mb-2">
+                        Latitude
+                        <span class="text-gray-500 text-xs">(optional)</span>
+                    </label>
+                    <input
+                        type="number"
+                        step="any"
+                        name="latitude"
+                        id="latitude"
+                        placeholder="e.g., 28.6139"
+                        class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    />
+                </div>
+                <div>
+                    <label for="longitude" class="block text-sm font-medium text-gray-700 mb-2">
+                        Longitude
+                        <span class="text-gray-500 text-xs">(optional)</span>
+                    </label>
+                    <input
+                        type="number"
+                        step="any"
+                        name="longitude"
+                        id="longitude"
+                        placeholder="e.g., 77.2090"
+                        class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    />
+                </div>
+            </div>
 
-          <% for (let i = Math.max(1, pagination.currentPage - 2); i <= Math.min(pagination.totalPages, pagination.currentPage + 2); i++) { %>
-            <% if (i === pagination.currentPage) { %>
-              <button class="px-3 py-1 bg-blue-600 text-white rounded"><%= i %></button>
-            <% } else { %>
-              <a href="?page=<%= i %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %><%= typeof statusFilter !== 'undefined' && statusFilter !== 'all' ? '&status=' + statusFilter : '' %>"
-                 class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50"><%= i %></a>
-            <% } %>
-          <% } %>
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                    name="status"
+                    id="status"
+                    class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                >
+                    <option value="1" selected>Active</option>
+                    <option value="2">Inactive</option>
+                </select>
+            </div>
 
-          <% if (pagination.currentPage < pagination.totalPages) { %>
-            <a href="?page=<%= pagination.currentPage + 1 %><%= typeof searchTerm !== 'undefined' && searchTerm ? '&search=' + searchTerm : '' %><%= typeof statusFilter !== 'undefined' && statusFilter !== 'all' ? '&status=' + statusFilter : '' %>"
-               class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Next</a>
-          <% } else { %>
-            <button class="px-3 py-1 border border-gray-300 rounded bg-gray-100 text-gray-400 cursor-not-allowed" disabled>Next</button>
-          <% } %>
-        </div>
-      </div>
-    </div>
-    <% } %>
-  </div>
-</div>
+            <div>
+                <label for="images" class="block text-sm font-medium text-gray-700 mb-2">
+                    Images
+                    <span class="text-gray-500 text-xs">(optional - you can upload multiple images)</span>
+                </label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition-colors duration-200">
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex text-sm text-gray-600">
+                            <label for="images" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                <span>Upload images</span>
+                                <input
+                                    type="file"
+                                    name="images"
+                                    id="images"
+                                    multiple
+                                    accept="image/*"
+                                    class="sr-only"
+                                />
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB each</p>
+                    </div>
+                </div>
+                <div id="image-preview" class="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 hidden"></div>
+            </div>
 
-<!-- View Details Modal -->
-<div id="viewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
-  <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
-    <div class="flex items-center justify-between pb-3 border-b">
-      <h3 class="text-lg font-semibold">Gurudwara Details</h3>
-      <button onclick="closeModal('viewModal')" class="text-gray-400 hover:text-gray-600">
-        <i class="fas fa-times h-6 w-6"></i>
-      </button>
-    </div>
-    <div id="modalContent" class="mt-4">
-      <!-- Dynamic content will be loaded here -->
-    </div>
-  </div>
-</div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">📋 Required Information:</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li>• Gurudwara name is required</li>
+                    <li>• Complete address is required</li>
+                    <li>• Coordinates are optional but helpful for mapping</li>
+                    <li>• QR code will be automatically generated after creation</li>
+                </ul>
+            </div>
 
-<!-- QR Code Modal -->
-<div id="qrModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
-  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-    <div class="flex items-center justify-between pb-3 border-b">
-      <h3 class="text-lg font-semibold" id="qrModalTitle">QR Code</h3>
-      <button onclick="closeModal('qrModal')" class="text-gray-400 hover:text-gray-600">
-        <i class="fas fa-times h-6 w-6"></i>
-      </button>
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <a href="/admin/gurudwaras" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors duration-200 flex items-center space-x-2">
+                    <i class="fas fa-times h-4 w-4"></i>
+                    <span>Cancel</span>
+                </a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
+                    <i class="fas fa-plus h-4 w-4"></i>
+                    <span>Create Gurudwara</span>
+                </button>
+            </div>
+        </form>
     </div>
-    <div class="mt-4 text-center">
-      <img id="qrCodeImage" src="" alt="QR Code" class="w-48 h-48 mx-auto border border-gray-200 rounded-lg" />
-      <button onclick="downloadQR()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-        <i class="fas fa-download mr-2"></i>Download QR
-      </button>
-    </div>
-  </div>
 </div>
 
 <script>
-  function viewGurudwara(id) {
-    fetch(`/admin/gurudwaras/${id}/details`)
-      .then(response => response.json())
-      .then(data => {
-        const modalContent = document.getElementById('modalContent');
-        modalContent.innerHTML = `
-          <div class="space-y-4">
-            <div class="aspect-w-16 aspect-h-9">
-              <img
-                src="${data.image_urls ? JSON.parse(data.image_urls)[0] : '/images/default-gurudwara.jpg'}"
-                alt="${data.name}"
-                class="w-full h-64 object-cover rounded-lg"
-                onerror="this.src='/images/default-gurudwara.jpg'"
-              />
-            </div>
-            <div>
-              <h3 class="text-xl font-semibold text-gray-900 mb-2">${data.name}</h3>
-              <div class="flex items-center text-gray-600 mb-4">
-                <i class="fas fa-map-marker-alt h-5 w-5 mr-2"></i>
-                <span>${data.address}</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Latitude</label>
-                <p class="mt-1 text-sm text-gray-900">${data.latitude || 'N/A'}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Longitude</label>
-                <p class="mt-1 text-sm text-gray-900">${data.longitude || 'N/A'}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Status</label>
-                <div class="mt-1">
-                  ${data.status === '1' ?
-                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>' :
-                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactive</span>'
-                  }
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Added</label>
-                <p class="mt-1 text-sm text-gray-900">${new Date(data.created_at).toLocaleDateString()}</p>
-              </div>
-            </div>
-          </div>
-        `;
-        showModal('viewModal');
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Error loading gurudwara details');
-      });
-  }
-
-  function viewQRCode(qrUrl, name) {
-    document.getElementById('qrModalTitle').textContent = `QR Code - ${name}`;
-    document.getElementById('qrCodeImage').src = qrUrl;
-    showModal('qrModal');
-  }
-
-  function downloadQR() {
-    const qrImage = document.getElementById('qrCodeImage');
-    const link = document.createElement('a');
-    link.href = qrImage.src;
-    link.download = 'qr-code.png';
-    link.click();
-  }
-
-  function showModal(modalId) {
-    document.getElementById(modalId).classList.remove('hidden');
-  }
-
-  function closeModal(modalId) {
-    document.getElementById(modalId).classList.add('hidden');
-  }
-
-  // Close modal when clicking outside
-  window.onclick = function(event) {
-    const viewModal = document.getElementById('viewModal');
-    const qrModal = document.getElementById('qrModal');
-    if (event.target === viewModal) {
-      closeModal('viewModal');
+// Image preview functionality
+document.getElementById('images').addEventListener('change', function(e) {
+    const files = e.target.files;
+    const previewContainer = document.getElementById('image-preview');
+    
+    if (files.length > 0) {
+        previewContainer.innerHTML = '';
+        previewContainer.classList.remove('hidden');
+        
+        Array.from(files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'relative group';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview ${index + 1}" class="w-full h-24 object-cover rounded-lg border border-gray-200">
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all duration-200 flex items-center justify-center">
+                        <span class="text-white text-xs opacity-0 group-hover:opacity-100">${file.name}</span>
+                    </div>
+                `;
+                previewContainer.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    } else {
+        previewContainer.classList.add('hidden');
     }
-    if (event.target === qrModal) {
-      closeModal('qrModal');
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const address = document.getElementById('address').value.trim();
+    
+    if (!name || !address) {
+        e.preventDefault();
+        alert('Please fill in all required fields (Name and Address).');
+        return false;
     }
-  }
+    
+    const latitude = document.getElementById('latitude').value;
+    const longitude = document.getElementById('longitude').value;
+    
+    // If one coordinate is provided, both should be provided
+    if ((latitude && !longitude) || (!latitude && longitude)) {
+        e.preventDefault();
+        alert('Please provide both latitude and longitude coordinates or leave both empty.');
+        return false;
+    }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin h-4 w-4"></i> <span>Creating...</span>';
+    submitBtn.disabled = true;
+    
+    // Re-enable if form submission fails
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 10000);
+});
+
+// Auto-resize textarea
+document.getElementById('address').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+});
 </script>
