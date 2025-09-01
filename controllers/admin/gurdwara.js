@@ -2,6 +2,7 @@ import { db } from "../../utils/db.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
+import { generateGurudwaraQR } from "../../services/qrCode.js";
 
 import { existsSync, mkdirSync } from "fs";
 
@@ -194,7 +195,6 @@ export const gurudwaraController = {
     }
   },
 
-  // Create new gurudwara (Super admin only)
   createGurudwara: async (req, res) => {
     try {
       const admin = req.admin;
@@ -308,28 +308,44 @@ export const gurudwaraController = {
         return res.redirect("/admin/gurudwaras/create");
       }
 
-      // Generate QR code URL
-      const qrCodeUrl = `/qr-codes/gurudwara-${Date.now()}.png`;
-
-      // Insert into database
-      await db.query(
-        `INSERT INTO gurudwaras (name, address, latitude, longitude, image_urls, qr_code_url, status, created_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      // Insert gurudwara into database with a placeholder for qr_code_url
+      const [result] = await db.query(
+        `INSERT INTO gurudwaras (name, address, latitude, longitude, image_urls, qr_code_url, qr_scan_points, status, created_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [
           name,
           address,
           latitude || null,
           longitude || null,
           JSON.stringify(imageUrlsArray),
-          qrCodeUrl,
+          "", // Temporary placeholder for qr_code_url
+          10, // Default qr_scan_points
           status || "1",
         ]
       );
 
+      const gurudwaraId = result.insertId;
+
+      // Generate QR code
+      const qrCodeResult = await generateGurudwaraQR(gurudwaraId);
+
+      // Update gurudwara with QR code URL
+      await db.query(`UPDATE gurudwaras SET qr_code_url = ? WHERE id = ?`, [
+        qrCodeResult.qrCodeImage,
+        gurudwaraId,
+      ]);
+
+      // Print QR code details to terminal
+      console.log("Generated QR Code for Gurudwara:");
+      console.log("Gurudwara ID:", gurudwaraId);
+      console.log("QR Code Hash:", qrCodeResult.qrCodeData);
+      console.log("QR Data:", qrCodeResult.qrData);
+      console.log("QR Code Data URL:", qrCodeResult.qrCodeImage);
+
       req.session = req.session || {};
       req.session.toast = {
         type: "success",
-        message: "Gurudwara created successfully",
+        message: "Gurudwara created successfully with QR code",
       };
       res.redirect("/admin/gurudwaras");
     } catch (error) {
@@ -342,7 +358,6 @@ export const gurudwaraController = {
       res.redirect("/admin/gurudwaras/create");
     }
   },
-
   // Show edit gurudwara form (Super admin only)
   showEditForm: async (req, res) => {
     try {
@@ -403,6 +418,7 @@ export const gurudwaraController = {
         status,
         image_urls,
         keep_existing_images,
+        qr_scan_points,
       } = req.body;
 
       if (admin.role !== "super_admin") {
@@ -420,6 +436,17 @@ export const gurudwaraController = {
         req.session.toast = {
           type: "error",
           message: "Name and address are required",
+        };
+        return res.redirect(`/admin/gurudwaras/${id}/edit`);
+      }
+
+      // Validate qr_scan_points
+      const points = parseInt(qr_scan_points) || 10;
+      if (points < 1 || points > 1000) {
+        req.session = req.session || {};
+        req.session.toast = {
+          type: "error",
+          message: "QR scan points must be between 1 and 1000",
         };
         return res.redirect(`/admin/gurudwaras/${id}/edit`);
       }
@@ -541,7 +568,7 @@ export const gurudwaraController = {
       // Update database
       await db.query(
         `UPDATE gurudwaras 
-         SET name = ?, address = ?, latitude = ?, longitude = ?, image_urls = ?, status = ?
+         SET name = ?, address = ?, latitude = ?, longitude = ?, image_urls = ?, qr_scan_points = ?, status = ?
          WHERE id = ?`,
         [
           name,
@@ -549,6 +576,7 @@ export const gurudwaraController = {
           latitude || null,
           longitude || null,
           JSON.stringify(imageUrlsArray),
+          points,
           status || "1",
           id,
         ]

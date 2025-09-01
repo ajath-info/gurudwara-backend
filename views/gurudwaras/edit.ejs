@@ -74,6 +74,27 @@
                 </div>
             </div>
 
+            <!-- NEW: QR Scan Points Field -->
+            <div>
+                <label for="qr_scan_points" class="block text-sm font-medium text-gray-700 mb-2">
+                    QR Scan Points <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="number"
+                    name="qr_scan_points"
+                    id="qr_scan_points"
+                    min="1"
+                    max="1000"
+                    value="<%= gurudwara.qr_scan_points || 10 %>"
+                    placeholder="Points awarded for scanning QR code"
+                    class="mt-1 block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    required
+                />
+                <p class="text-sm text-gray-500 mt-1">
+                    Points users will receive when they scan this Gurudwara's QR code (1-1000)
+                </p>
+            </div>
+
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select
@@ -144,6 +165,7 @@
                 <h3 class="text-sm font-medium text-gray-700 mb-2">📋 Update Information:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                     <li>• Gurudwara name and address are required</li>
+                    <li>• QR scan points determine reward for visitors (1-1000)</li>
                     <li>• Coordinates are optional but helpful for mapping</li>
                     <li>• Existing images will be kept unless unchecked</li>
                     <li>• New images will be added to existing ones</li>
@@ -231,10 +253,17 @@ function removeExistingImage(imageUrl) {
 document.querySelector('form').addEventListener('submit', function(e) {
     const name = document.getElementById('name').value.trim();
     const address = document.getElementById('address').value.trim();
+    const points = document.getElementById('qr_scan_points').value;
     
     if (!name || !address) {
         e.preventDefault();
         alert('Please fill in all required fields (Name and Address).');
+        return false;
+    }
+    
+    if (!points || points < 1 || points > 1000) {
+        e.preventDefault();
+        alert('QR scan points must be between 1 and 1000.');
         return false;
     }
     
@@ -303,6 +332,16 @@ document.getElementById('images').addEventListener('change', function(e) {
             document.getElementById('image-preview').classList.add('hidden');
             return;
         }
+    }
+});
+
+// Points validation
+document.getElementById('qr_scan_points').addEventListener('input', function() {
+    const value = parseInt(this.value);
+    if (value < 1) {
+        this.value = 1;
+    } else if (value > 1000) {
+        this.value = 1000;
     }
 });
 </script>
