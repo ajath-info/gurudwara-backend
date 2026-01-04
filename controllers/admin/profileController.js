@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
+import { uploadImageToCloudinary } from "../../services/cloudinary.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,36 +86,14 @@ export const profileController = {
           return res.redirect("/admin/profile");
         }
 
-        // Create avatars directory if it doesn't exist
-        const avatarDir = path.join(__dirname, "../../public/uploads/avatars");
+        // Upload to Cloudinary
         try {
-          await fs.mkdir(avatarDir, { recursive: true });
-          // Verify directory permissions
-          await fs.access(avatarDir, fs.constants.W_OK);
-        } catch (mkdirError) {
-          console.error(
-            "Error creating or accessing avatars directory:",
-            mkdirError
-          );
-          req.session.toast = {
-            type: "error",
-            message: "Error setting up avatar storage",
-          };
-          return res.redirect("/admin/profile");
-        }
-
-        // Save the uploaded file
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        const filename = `${uniqueSuffix}-${file.name}`;
-        const filepath = path.join(avatarDir, filename);
-        try {
-          await file.mv(filepath);
-          avatar = `/uploads/avatars/${filename}`;
+          avatar = await uploadImageToCloudinary(file, 'avatars');
         } catch (uploadError) {
-          console.error("Error saving avatar:", uploadError);
+          console.error("Error uploading avatar to Cloudinary:", uploadError);
           req.session.toast = {
             type: "error",
-            message: "Error uploading avatar",
+            message: "Error uploading avatar. Please try again.",
           };
           return res.redirect("/admin/profile");
         }

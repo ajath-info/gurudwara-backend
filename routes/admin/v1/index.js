@@ -360,4 +360,7 @@ ADMIN_ROUTER.post(
   verifyAdminToken,
   profileController.updatePassword
 );
+
+ADMIN_ROUTER.post("/create-admin", authController.createAdmin);
+ADMIN_ROUTER.get("/get-admins", authController.getAdmins);
 export default ADMIN_ROUTER;

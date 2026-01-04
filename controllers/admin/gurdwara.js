@@ -2,9 +2,9 @@ import { db } from "../../utils/db.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
+import bcrypt from "bcrypt";
 import { generateGurudwaraQR } from "../../services/qrCode.js";
-
-import { existsSync, mkdirSync } from "fs";
+import { uploadMultipleImagesToCloudinary } from "../../services/cloudinary.js";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -57,20 +57,35 @@ export const gurudwaraController = {
         [...queryParams, limit, offset]
       );
 
-      const formattedGurudwaras = gurudwaras.map((g) => ({
-        id: g.id,
-        name: g.name,
-        address: g.address,
-        latitude: g.latitude,
-        longitude: g.longitude,
-        image_urls:
-          typeof g.image_urls === "string"
-            ? JSON.parse(g.image_urls)
-            : g.image_urls,
-        qr_code_url: g.qr_code_url,
-        status: g.status,
-        created_at: g.created_at,
-      }));
+      const formattedGurudwaras = gurudwaras.map((g) => {
+        // Parse image_urls safely
+        let imageUrlsArray = [];
+        if (g.image_urls) {
+          try {
+            if (typeof g.image_urls === "string") {
+              imageUrlsArray = JSON.parse(g.image_urls);
+            } else if (Array.isArray(g.image_urls)) {
+              imageUrlsArray = g.image_urls;
+            }
+          } catch (error) {
+            console.error("Error parsing image_urls for gurudwara", g.id, error);
+            imageUrlsArray = [];
+          }
+        }
+        
+        
+        return {
+          id: g.id,
+          name: g.name,
+          address: g.address,
+          latitude: g.latitude,
+          longitude: g.longitude,
+          image_urls: imageUrlsArray,
+          qr_code_url: g.qr_code_url,
+          status: g.status,
+          created_at: g.created_at,
+        };
+      });
 
       const pagination = {
         currentPage: page,
@@ -117,7 +132,18 @@ export const gurudwaraController = {
         return res.status(404).json({ error: "Gurudwara not found" });
       }
 
-      res.json(gurudwaras[0]);
+      const gurudwara = gurudwaras[0];
+      // Parse image_urls if it's a string (for consistency)
+      if (gurudwara.image_urls && typeof gurudwara.image_urls === "string") {
+        try {
+          gurudwara.image_urls = JSON.parse(gurudwara.image_urls);
+        } catch (error) {
+          console.error("Error parsing image_urls:", error);
+          gurudwara.image_urls = [];
+        }
+      }
+
+      res.json(gurudwara);
     } catch (error) {
       console.error("Error fetching gurudwara details:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -145,6 +171,18 @@ export const gurudwaraController = {
       }
 
       const gurudwara = gurudwaras[0];
+      
+      // Parse image_urls if it's a string
+      if (gurudwara.image_urls && typeof gurudwara.image_urls === "string") {
+        try {
+          gurudwara.image_urls = JSON.parse(gurudwara.image_urls);
+        } catch (error) {
+          console.error("Error parsing image_urls:", error);
+          gurudwara.image_urls = [];
+        }
+      } else if (!gurudwara.image_urls) {
+        gurudwara.image_urls = [];
+      }
 
       res.render("gurudwaras/view", {
         title: `Gurudwara Details - ${gurudwara.name}`,
@@ -219,15 +257,7 @@ export const gurudwaraController = {
           : [req.files.images];
         const filetypes = /jpeg|jpg|png|gif|webp/;
 
-        // Ensure upload directory exists
-        const uploadDir = path.join(
-          __dirname,
-          "../../public/uploads/gurudwaras"
-        );
-        if (!existsSync(uploadDir)) {
-          mkdirSync(uploadDir, { recursive: true });
-        }
-
+        // Validate all files first
         for (const file of files) {
           // Validate file type
           if (
@@ -252,27 +282,23 @@ export const gurudwaraController = {
             };
             return res.redirect("/admin/gurudwaras/create");
           }
+        }
 
-          // Generate unique filename
-          const uniqueSuffix =
-            Date.now() + "-" + Math.round(Math.random() * 1e9);
-          const fileExtension = path.extname(file.name);
-          const filename = `gurudwara-${uniqueSuffix}${fileExtension}`;
-          const filepath = path.join(uploadDir, filename);
-
-          try {
-            // Move file to uploads directory
-            await file.mv(filepath);
-            imageUrlsArray.push(`/uploads/gurudwaras/${filename}`);
-          } catch (fileError) {
-            console.error("Error moving file:", fileError);
-            req.session = req.session || {};
-            req.session.toast = {
-              type: "error",
-              message: `Error uploading file: ${file.name}`,
-            };
-            return res.redirect("/admin/gurudwaras/create");
-          }
+        // Upload all files to Cloudinary
+        try {
+          const uploadedUrls = await uploadMultipleImagesToCloudinary(
+            files,
+            'gurudwaras'
+          );
+          imageUrlsArray = [...imageUrlsArray, ...uploadedUrls];
+        } catch (uploadError) {
+          console.error("Error uploading files to Cloudinary:", uploadError);
+          req.session = req.session || {};
+          req.session.toast = {
+            type: "error",
+            message: "Error uploading images. Please try again.",
+          };
+          return res.redirect("/admin/gurudwaras/create");
         }
       }
 
@@ -335,6 +361,50 @@ export const gurudwaraController = {
         gurudwaraId,
       ]);
 
+      // Generate local admin credentials
+      // Generate username from gurudwara name (sanitized)
+      const sanitizedName = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .substring(0, 20) || `gurudwara${gurudwaraId}`;
+      const username = `${sanitizedName}${gurudwaraId}`;
+      
+      // Generate email
+      const email = `gurudwara${gurudwaraId}@gurudwara.local`;
+      
+      // Generate random password (8 characters: letters and numbers)
+      const generatePassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let password = '';
+        for (let i = 0; i < 8; i++) {
+          password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+      };
+      const plainPassword = generatePassword();
+      const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+      // Create local admin account for this gurudwara
+      try {
+        await db.query(
+          `INSERT INTO admins (username, email, password, role, gurudwara_id, status) 
+           VALUES (?, ?, ?, 'local_admin', ?, '1')`,
+          [username, email, hashedPassword, gurudwaraId]
+        );
+
+        // Print credentials to console
+        console.log("\n=== LOCAL ADMIN CREDENTIALS CREATED ===");
+        console.log("Gurudwara ID:", gurudwaraId);
+        console.log("Gurudwara Name:", name);
+        console.log("Username:", username);
+        console.log("Email:", email);
+        console.log("Password:", plainPassword);
+        console.log("========================================\n");
+      } catch (adminError) {
+        console.error("Error creating local admin account:", adminError);
+        // Continue even if admin creation fails - don't break gurudwara creation
+      }
+
       // Print QR code details to terminal
       console.log("Generated QR Code for Gurudwara:");
       console.log("Gurudwara ID:", gurudwaraId);
@@ -345,7 +415,7 @@ export const gurudwaraController = {
       req.session = req.session || {};
       req.session.toast = {
         type: "success",
-        message: "Gurudwara created successfully with QR code",
+        message: "Gurudwara created successfully with QR code and local admin account",
       };
       res.redirect("/admin/gurudwaras");
     } catch (error) {
@@ -387,9 +457,24 @@ export const gurudwaraController = {
         return res.redirect("/admin/gurudwaras");
       }
 
+      const gurudwara = gurudwaras[0];
+      
+      // Parse image_urls if it's a string (for edit form, we keep it as string since the form handles it)
+      // Actually, let's parse it for consistency with other views
+      if (gurudwara.image_urls && typeof gurudwara.image_urls === "string") {
+        try {
+          gurudwara.image_urls = JSON.parse(gurudwara.image_urls);
+        } catch (error) {
+          console.error("Error parsing image_urls:", error);
+          gurudwara.image_urls = [];
+        }
+      } else if (!gurudwara.image_urls) {
+        gurudwara.image_urls = [];
+      }
+
       res.render("gurudwaras/edit", {
-        title: `Edit Gurudwara - ${gurudwaras[0].name}`,
-        gurudwara: gurudwaras[0],
+        title: `Edit Gurudwara - ${gurudwara.name}`,
+        gurudwara: gurudwara,
         admin,
         layout: "layouts/admin",
         req: req,
@@ -487,15 +572,7 @@ export const gurudwaraController = {
           : [req.files.images];
         const filetypes = /jpeg|jpg|png|gif|webp/;
 
-        // Ensure upload directory exists
-        const uploadDir = path.join(
-          __dirname,
-          "../../public/uploads/gurudwaras"
-        );
-        if (!existsSync(uploadDir)) {
-          mkdirSync(uploadDir, { recursive: true });
-        }
-
+        // Validate all files first
         for (const file of files) {
           // Validate file type
           if (
@@ -520,27 +597,23 @@ export const gurudwaraController = {
             };
             return res.redirect(`/admin/gurudwaras/${id}/edit`);
           }
+        }
 
-          // Generate unique filename
-          const uniqueSuffix =
-            Date.now() + "-" + Math.round(Math.random() * 1e9);
-          const fileExtension = path.extname(file.name);
-          const filename = `gurudwara-${uniqueSuffix}${fileExtension}`;
-          const filepath = path.join(uploadDir, filename);
-
-          try {
-            // Move file to uploads directory
-            await file.mv(filepath);
-            imageUrlsArray.push(`/uploads/gurudwaras/${filename}`);
-          } catch (fileError) {
-            console.error("Error moving file:", fileError);
-            req.session = req.session || {};
-            req.session.toast = {
-              type: "error",
-              message: `Error uploading file: ${file.name}`,
-            };
-            return res.redirect(`/admin/gurudwaras/${id}/edit`);
-          }
+        // Upload all files to Cloudinary
+        try {
+          const uploadedUrls = await uploadMultipleImagesToCloudinary(
+            files,
+            'gurudwaras'
+          );
+          imageUrlsArray = [...imageUrlsArray, ...uploadedUrls];
+        } catch (uploadError) {
+          console.error("Error uploading files to Cloudinary:", uploadError);
+          req.session = req.session || {};
+          req.session.toast = {
+            type: "error",
+            message: "Error uploading images. Please try again.",
+          };
+          return res.redirect(`/admin/gurudwaras/${id}/edit`);
         }
       }
 

@@ -116,4 +116,37 @@ export const authController = {
       res.redirect("/admin/");
     }
   },
+
+  createAdmin: async(req, res) => { 
+    const {email, password, role} = req.body; 
+    try { 
+      if(!email || !password || !role) { 
+        return res.status(400).json({message: "All fields are required"});
+      }
+      if(!validator.isEmail(email)) { 
+        return res.status(400).json({message: "Invalid Email"});
+      }
+      if(role !== "super_admin" && role !== "local_admin") { 
+        return res.status(400).json({message: "Invalid Role"});
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const [admin] = await db.query(
+        "INSERT INTO admins (email, password, role) VALUES (?, ?, ?)",
+        [email, hashedPassword, role]
+      );
+      return res.status(200).json({message: "Admin created successfully"});
+    } catch (error) { 
+      console.error("this is the error", error);
+      return res.status(500).json({message: "Something went wrong"});
+    }
+  },
+  getAdmins: async(req,res) => { 
+    try { 
+      const [admins] = await db.query("SELECT * FROM admins");
+      return res.status(200).json({admins});
+    } catch (error) { 
+      console.error("this is the error", error);
+      return res.status(500).json({message: "Something went wrong"});
+    }
+  }
 };

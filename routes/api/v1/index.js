@@ -5,7 +5,6 @@ import { sendOtp } from "../../../controllers/api/v1/index.js";
 import { verifyOtp } from "../../../controllers/api/v1/index.js";
 import { getAllGurudwaras } from "../../../controllers/api/v1/index.js";
 import * as MOBILEAPI from "../../../controllers/api/v1/index.js";
-import multer, { MulterError } from "multer";
 
 const apiRouter = express.Router();
 

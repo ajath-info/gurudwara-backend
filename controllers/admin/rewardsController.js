@@ -2,6 +2,7 @@ import { db } from "../../utils/db.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
+import { uploadMultipleImagesToCloudinary } from "../../services/cloudinary.js";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -211,6 +212,7 @@ export const rewardController = {
           : [req.files.images];
         const filetypes = /jpeg|jpg|png|gif/;
 
+        // Validate all files first
         for (const file of files) {
           if (
             !filetypes.test(file.mimetype) ||
@@ -232,17 +234,23 @@ export const rewardController = {
             };
             return res.redirect("/admin/rewards/create");
           }
+        }
 
-          const uniqueSuffix =
-            Date.now() + "-" + Math.round(Math.random() * 1e9);
-          const filename = `${uniqueSuffix}-${file.name}`;
-          const filepath = path.join(
-            __dirname,
-            "../../public/uploads/rewards",
-            filename
+        // Upload all files to Cloudinary
+        try {
+          const uploadedUrls = await uploadMultipleImagesToCloudinary(
+            files,
+            'rewards'
           );
-          await file.mv(filepath);
-          imageUrlsArray.push(`/uploads/rewards/${filename}`);
+          imageUrlsArray = [...imageUrlsArray, ...uploadedUrls];
+        } catch (uploadError) {
+          console.error("Error uploading files to Cloudinary:", uploadError);
+          req.session = req.session || {};
+          req.session.toast = {
+            type: "error",
+            message: "Error uploading images. Please try again.",
+          };
+          return res.redirect("/admin/rewards/create");
         }
       }
 
@@ -393,6 +401,7 @@ export const rewardController = {
           : [req.files.images];
         const filetypes = /jpeg|jpg|png|gif/;
 
+        // Validate all files first
         for (const file of files) {
           if (
             !filetypes.test(file.mimetype) ||
@@ -414,17 +423,23 @@ export const rewardController = {
             };
             return res.redirect(`/admin/rewards/${id}/edit`);
           }
+        }
 
-          const uniqueSuffix =
-            Date.now() + "-" + Math.round(Math.random() * 1e9);
-          const filename = `${uniqueSuffix}-${file.name}`;
-          const filepath = path.join(
-            __dirname,
-            "../../public/uploads/rewards",
-            filename
+        // Upload all files to Cloudinary
+        try {
+          const uploadedUrls = await uploadMultipleImagesToCloudinary(
+            files,
+            'rewards'
           );
-          await file.mv(filepath);
-          imageUrlsArray.push(`/uploads/rewards/${filename}`);
+          imageUrlsArray = [...imageUrlsArray, ...uploadedUrls];
+        } catch (uploadError) {
+          console.error("Error uploading files to Cloudinary:", uploadError);
+          req.session = req.session || {};
+          req.session.toast = {
+            type: "error",
+            message: "Error uploading images. Please try again.",
+          };
+          return res.redirect(`/admin/rewards/${id}/edit`);
         }
       }
 

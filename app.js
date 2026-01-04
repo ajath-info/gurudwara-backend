@@ -22,6 +22,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         scriptSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
       },
     },
   })
