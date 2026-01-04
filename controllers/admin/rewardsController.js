@@ -202,7 +202,7 @@ export const rewardController = {
         return res.redirect("/admin/rewards");
       }
 
-      const { title, description, points, image_urls } = req.body;
+      const { title, description, points } = req.body;
       let imageUrlsArray = [];
 
       // Handle uploaded images
@@ -254,20 +254,6 @@ export const rewardController = {
         }
       }
 
-      // Append manually provided image URLs
-      try {
-        const manualUrls = image_urls ? JSON.parse(image_urls) : [];
-        if (Array.isArray(manualUrls)) {
-          imageUrlsArray = [...imageUrlsArray, ...manualUrls];
-        }
-      } catch (error) {
-        req.session = req.session || {};
-        req.session.toast = {
-          type: "error",
-          message: "Invalid image URLs format",
-        };
-        return res.redirect("/admin/rewards/create");
-      }
 
       // Validate required fields
       if (!title || !points) {
@@ -371,7 +357,7 @@ export const rewardController = {
     try {
       const admin = req.admin;
       const { id } = req.params;
-      const { title, description, points, image_urls, status } = req.body;
+      const { title, description, points, status, keep_existing_images } = req.body;
       let imageUrlsArray = [];
 
       // Fetch existing reward to get current image_urls
@@ -389,10 +375,18 @@ export const rewardController = {
         return res.redirect("/admin/rewards");
       }
 
-      // Parse existing image_urls
-      imageUrlsArray = rewards[0].image_urls
-        ? JSON.parse(rewards[0].image_urls)
-        : [];
+      // Keep existing images if requested
+      if (keep_existing_images === "true") {
+        try {
+          const existingImages = rewards[0].image_urls
+            ? JSON.parse(rewards[0].image_urls)
+            : [];
+          imageUrlsArray = [...existingImages];
+        } catch (error) {
+          console.log("Error parsing existing images");
+          imageUrlsArray = [];
+        }
+      }
 
       // Handle uploaded images
       if (req.files && req.files.images) {
@@ -443,20 +437,6 @@ export const rewardController = {
         }
       }
 
-      // Append manually provided image URLs
-      try {
-        const manualUrls = image_urls ? JSON.parse(image_urls) : [];
-        if (Array.isArray(manualUrls)) {
-          imageUrlsArray = [...imageUrlsArray, ...manualUrls];
-        }
-      } catch (error) {
-        req.session = req.session || {};
-        req.session.toast = {
-          type: "error",
-          message: "Invalid image URLs format",
-        };
-        return res.redirect(`/admin/rewards/${id}/edit`);
-      }
 
       // Validate required fields
       if (!title || !points) {
