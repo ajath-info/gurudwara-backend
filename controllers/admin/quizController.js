@@ -23,12 +23,12 @@ export const quizController = {
           id, question, option_1, option_2, option_3, option_4,
           correct_option, points, status, created_at, updated_at
         FROM quizzes
-        WHERE 1=1
+        WHERE status = "1"
       `;
       let countQuery = `
         SELECT COUNT(*) as total 
         FROM quizzes
-        WHERE 1=1
+        WHERE status = "1"
       `;
       const params = [];
       const countParams = [];
