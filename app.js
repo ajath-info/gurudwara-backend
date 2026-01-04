@@ -35,7 +35,7 @@ app.use(cookieParser());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
-app.set("trust proxy", true);
+app.set("trust proxy", false);
 app.use(
   session({
     secret: DOTENV.SESSION_SECRET,
