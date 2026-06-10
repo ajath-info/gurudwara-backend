@@ -1,1 +1,1 @@
-# gurudwara-backend
+# gurudwara-backend api/admin
