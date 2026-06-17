@@ -61,6 +61,7 @@ apiRouter.get(
 // Edit user
 apiRouter.post(
   "/updateUser",
+  multerMiddleware,
   verifyToken,
   MOBILEAPI.editProfile
 );
