@@ -1481,25 +1481,95 @@ export const advancedSearchGurudwaras = async (req, res, next) => {
  */
 export const editProfile = async (req, res, next) => {
   try {
-    console.log("========== EDIT PROFILE ==========");
-    console.log("BODY =>", req.body);
-    console.log("USER =>", req.user);
-
     const userId = req.user?.id;
+    if (!userId) {
+      return apiResponse(res, {
+        error: true,
+        code: 401,
+        status: 0,
+        message: "User not authenticated",
+      });
+    }
 
-    console.log("USER ID =>", userId);
+    const { name, phone, profileImage } = req.body;
 
-    const { name, phone, profileImage } = req.body || {};
+    const errors = [];
+    if (name && (name.length === 0 || name.length > 150)) {
+      errors.push("Name must be in between 1 to 150 characters");
+    }
 
-    console.log("NAME =>", name);
-    console.log("PHONE =>", phone);
-    console.log("PROFILE IMAGE =>", profileImage);
+    if (phone) {
+      if (!validator.isMobilePhone(phone)) {
+        errors.push("Enter a valid phone number");
+      }
+    }
 
-    // existing code
+    if (profileImage && !validator.isURL(profileImage)) {
+      errors.push("Enter a valid profile image");
+    }
+
+    if (errors.length > 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: errors[0],
+      });
+    }
+
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (profileImage) updateFields.profile_image = profileImage;
+    if (phone) updateFields.phone = phone;
+
+    if (Object.keys(updateFields).length === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "No fields to update",
+      });
+    }
+
+    const setClause = Object.keys(updateFields)
+      .map((key) => `${key} = ?`)
+      .join(", ");
+
+    const values = [...Object.values(updateFields), userId];
+
+    const [insert] = await db.query(
+      `UPDATE users SET ${setClause} WHERE id = ? AND status = '1'`,
+      values
+    );
+    if (insert.affectedRows === 0) {
+      return apiResponse(res, {
+        error: true,
+        code: 400,
+        status: 0,
+        message: "Error in updating the user",
+      });
+    }
+
+    // Fetched the updated user
+    const [updatedUser] = await db.query(
+      `SELECT * FROM users WHERE id = ? AND status = '1'`,
+      [userId]
+    );
+
+    const user = updatedUser[0];
+    // Prepare response
+    const response = {
+      ...user,
+    };
+
+    return apiResponse(res, {
+      error: false,
+      code: 200,
+      status: 1,
+      message: "User updated succesfully",
+      payload: response,
+    });
   } catch (err) {
-    console.error("EDIT PROFILE ERROR =>", err);
-    console.error("STACK =>", err.stack);
-
     next(err);
   }
 };
