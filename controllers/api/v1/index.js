@@ -1481,35 +1481,26 @@ export const advancedSearchGurudwaras = async (req, res, next) => {
  */
 export const editProfile = async (req, res, next) => {
   try {
+    console.log("========== EDIT PROFILE ==========");
     console.log("BODY =>", req.body);
     console.log("USER =>", req.user);
 
     const userId = req.user?.id;
 
+    console.log("USER ID =>", userId);
+
     const { name, phone, profileImage } = req.body || {};
 
-    console.log("userId =>", userId);
-    console.log("name =>", name);
-    console.log("phone =>", phone);
+    console.log("NAME =>", name);
+    console.log("PHONE =>", phone);
+    console.log("PROFILE IMAGE =>", profileImage);
 
-    // test query
-    const [test] = await db.query(
-      "SELECT * FROM users WHERE id = ?",
-      [userId]
-    );
-
-    console.log("TEST USER =>", test);
-
-    return res.json(test);
-
+    // existing code
   } catch (err) {
     console.error("EDIT PROFILE ERROR =>", err);
+    console.error("STACK =>", err.stack);
 
-    return res.status(500).json({
-      error: true,
-      message: err.message,
-      stack: err.stack,
-    });
+    next(err);
   }
 };
 
