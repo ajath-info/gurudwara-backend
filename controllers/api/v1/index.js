@@ -1481,109 +1481,36 @@ export const advancedSearchGurudwaras = async (req, res, next) => {
  */
 export const editProfile = async (req, res, next) => {
   try {
+    console.log("BODY =>", req.body);
+    console.log("USER =>", req.user);
+
     const userId = req.user?.id;
-    if (!userId) {
-      return apiResponse(res, {
-        error: true,
-        code: 401,
-        status: 0,
-        message: "User not authenticated",
-      });
-    }
-	
-	console.log("req.user =>", req.user);
-console.log("req.body =>", req.body);
-console.log("userId =>", userId);
-console.log("updateFields =>", updateFields);
-console.log("values =>", values);
 
-    const { name, phone, profileImage } = req.body;
+    const { name, phone, profileImage } = req.body || {};
 
-    const errors = [];
-    if (name && (name.length === 0 || name.length > 150)) {
-      errors.push("Name must be in between 1 to 150 characters");
-    }
+    console.log("userId =>", userId);
+    console.log("name =>", name);
+    console.log("phone =>", phone);
 
-    if (phone) {
-      if (!validator.isMobilePhone(phone)) {
-        errors.push("Enter a valid phone number");
-      }
-    }
-
-    if (profileImage && !validator.isURL(profileImage)) {
-      errors.push("Enter a valid profile image");
-    }
-
-    if (errors.length > 0) {
-      return apiResponse(res, {
-        error: true,
-        code: 400,
-        status: 0,
-        message: errors[0],
-      });
-    }
-
-    const updateFields = {};
-    if (name) updateFields.name = name;
-    if (profileImage) updateFields.profile_image = profileImage;
-    if (phone) updateFields.phone = phone;
-
-    if (Object.keys(updateFields).length === 0) {
-      return apiResponse(res, {
-        error: true,
-        code: 400,
-        status: 0,
-        message: "No fields to update",
-      });
-    }
-
-    const setClause = Object.keys(updateFields)
-      .map((key) => `${key} = ?`)
-      .join(", ");
-
-    const values = [...Object.values(updateFields), userId];
-
-    const [insert] = await db.query(
-      `UPDATE users SET ${setClause} WHERE id = ? AND status = '1'`,
-      values
-    );
-    if (insert.affectedRows === 0) {
-      return apiResponse(res, {
-        error: true,
-        code: 400,
-        status: 0,
-        message: "Error in updating the user",
-      });
-    }
-
-    // Fetched the updated user
-    const [updatedUser] = await db.query(
-      `SELECT * FROM users WHERE id = ? AND status = '1'`,
+    // test query
+    const [test] = await db.query(
+      "SELECT * FROM users WHERE id = ?",
       [userId]
     );
 
-    const user = updatedUser[0];
-    // Prepare response
-    const response = {
-      ...user,
-    };
+    console.log("TEST USER =>", test);
 
-    return apiResponse(res, {
-      error: false,
-      code: 200,
-      status: 1,
-      message: "User updated succesfully",
-      payload: response,
-    });
+    return res.json(test);
+
   } catch (err) {
-  console.error("EDIT PROFILE ERROR:", err);
+    console.error("EDIT PROFILE ERROR =>", err);
 
-  return res.status(500).json({
-    error: true,
-    message: err.message,
-    stack: err.stack,
-  });
-}
+    return res.status(500).json({
+      error: true,
+      message: err.message,
+      stack: err.stack,
+    });
+  }
 };
 
 export const getTermsCondition = async (req, res, next) => {
