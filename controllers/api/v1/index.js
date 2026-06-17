@@ -1490,6 +1490,12 @@ export const editProfile = async (req, res, next) => {
         message: "User not authenticated",
       });
     }
+	
+	console.log("req.user =>", req.user);
+console.log("req.body =>", req.body);
+console.log("userId =>", userId);
+console.log("updateFields =>", updateFields);
+console.log("values =>", values);
 
     const { name, phone, profileImage } = req.body;
 
@@ -1570,8 +1576,14 @@ export const editProfile = async (req, res, next) => {
       payload: response,
     });
   } catch (err) {
-    next(err);
-  }
+  console.error("EDIT PROFILE ERROR:", err);
+
+  return res.status(500).json({
+    error: true,
+    message: err.message,
+    stack: err.stack,
+  });
+}
 };
 
 export const getTermsCondition = async (req, res, next) => {

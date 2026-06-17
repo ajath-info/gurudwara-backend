@@ -44,7 +44,7 @@ export const authController = {
 
       // Check if the admin exists
       const [admin] = await db.query(
-        `SELECT * FROM admins WHERE email = ? AND status = '1'`,
+        `SELECT * FROM admins WHERE email = ? AND status = '1' AND role = 'super_admin'`,
         [email]
       );
       if (admin.length === 0) {
