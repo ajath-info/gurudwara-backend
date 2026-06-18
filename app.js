@@ -15,6 +15,7 @@ import { toastMiddleware } from "./middleware/toast.js";
 import expressLayouts from "express-ejs-layouts";
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middlewares
 app.use(
