@@ -160,7 +160,7 @@ export const verifyOtp = async (req, res, next) => {
   }
 };
 
-/*export const updateUserName = async (req, res, next) => {
+export const updateUserName = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -221,16 +221,6 @@ export const verifyOtp = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};*/
-
-export const updateUserName = async (req, res) => {
-  console.log("UPDATE_USER_NAME_HIT");
-
-  return res.status(200).json({
-    success: true,
-    body: req.body,
-    user: req.user,
-  });
 };
 
 export const getAllGurudwaras = async (req, res, next) => {
