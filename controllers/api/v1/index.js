@@ -1642,6 +1642,7 @@ export const getPrivacyPolicy = async (req, res, next) => {
 export const getPointsHistory = async (req, res, next) => {
   try {
     const userId = req.user?.id;
+
     if (!userId) {
       return apiResponse(res, {
         error: true,
@@ -1651,29 +1652,38 @@ export const getPointsHistory = async (req, res, next) => {
       });
     }
 
-    // Get total points for the user
+    // Get total earned points
     const totalPointsQuery = `
-      SELECT COALESCE(SUM(points), 0) as total_points 
-      FROM points_earned 
+      SELECT COALESCE(SUM(points), 0) as total_points
+      FROM points_earned
       WHERE user_id = ?
     `;
+
     const [deductedPoints] = await db.query(
-      `SELECT SUM(points) as deducted_points FROM rewards_redeemed WHERE user_id = ?`,
+      `SELECT COALESCE(SUM(points), 0) as deducted_points 
+       FROM rewards_redeemed 
+       WHERE user_id = ?`,
       [userId]
     );
-    const pointsDeducted = deductedPoints[0].deducted_points;
+
+    const pointsDeducted = deductedPoints[0]?.deducted_points || 0;
+
     const [totalResult] = await db.query(totalPointsQuery, [userId]);
-    const totalPoints = totalResult[0].total_points - pointsDeducted;
+
+    const totalPoints =
+      (totalResult[0]?.total_points || 0) - pointsDeducted;
 
     // Get points history grouped by gurudwara
     const historyQuery = `
-      SELECT 
+      SELECT
         g.id as gurudwara_id,
         g.name as gurudwara_name,
         g.image_urls,
         COALESCE(SUM(pe.points), 0) as total_points
       FROM gurudwaras g
-      LEFT JOIN points_earned pe ON g.id = pe.gurudwara_id AND pe.user_id = ?
+      LEFT JOIN points_earned pe
+        ON g.id = pe.gurudwara_id
+        AND pe.user_id = ?
       WHERE pe.gurudwara_id IS NOT NULL
       GROUP BY g.id, g.name, g.image_urls
       HAVING total_points > 0
@@ -1682,13 +1692,28 @@ export const getPointsHistory = async (req, res, next) => {
 
     const [historyResult] = await db.query(historyQuery, [userId]);
 
-    // Format the response to match the screen structure
-    const formattedHistory = historyResult.map((item) => ({
-      gurudwara_id: item.gurudwara_id,
-      gurudwara_name: item.gurudwara_name,
-      image_urls: JSON.parse(item.image_urls || "[]"),
-      points: item.total_points,
-    }));
+    const formattedHistory = historyResult.map((item) => {
+      let imageUrls = [];
+
+      try {
+        if (item.image_urls) {
+          imageUrls =
+            typeof item.image_urls === "string"
+              ? JSON.parse(item.image_urls)
+              : item.image_urls;
+        }
+      } catch (error) {
+        // Handle plain URL stored in DB
+        imageUrls = [item.image_urls];
+      }
+
+      return {
+        gurudwara_id: item.gurudwara_id,
+        gurudwara_name: item.gurudwara_name,
+        image_urls: imageUrls,
+        points: item.total_points,
+      };
+    });
 
     const response = {
       total_points: totalPoints,
